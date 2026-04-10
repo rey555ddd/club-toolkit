@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Menu, X, Sparkles } from "lucide-react";
 
-const CHINATOWN_LOGO = "https://d2xsxph8kpxj0f.cloudfront.net/310419663032574653/Pha3yvm4xNX2ySLS98jSEw/中國城Logo_c1bf6212.jpg";
-const DIHAO_LOGO = "https://d2xsxph8kpxj0f.cloudfront.net/310419663032574653/Pha3yvm4xNX2ySLS98jSEw/帝豪Logo_9eea1077.jpg";
+const CHINATOWN_LOGO = "/logos/chinatown-transparent.png";
+const DIHAO_LOGO = "/logos/empire-transparent.png";
 
 const navItems = [
   { label: "首頁", path: "/" },
@@ -38,7 +38,6 @@ export default function Navbar() {
                 className="h-8 w-auto object-contain"
                 style={{
                   filter: "drop-shadow(0 0 6px rgba(201,168,76,0.5))",
-                  mixBlendMode: "screen",
                 }}
               />
               <span
@@ -53,7 +52,6 @@ export default function Navbar() {
                 className="h-8 w-auto object-contain"
                 style={{
                   filter: "drop-shadow(0 0 6px rgba(201,168,76,0.5))",
-                  mixBlendMode: "screen",
                 }}
               />
             </div>

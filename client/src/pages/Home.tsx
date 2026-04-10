@@ -1,8 +1,8 @@
 import { Link } from "wouter";
 import { FileText, Image, CalendarDays, ChevronRight, Zap, Shield, Target } from "lucide-react";
 
-const CHINATOWN_LOGO = "https://d2xsxph8kpxj0f.cloudfront.net/310419663032574653/Pha3yvm4xNX2ySLS98jSEw/中國城Logo_c1bf6212.jpg";
-const DIHAO_LOGO = "https://d2xsxph8kpxj0f.cloudfront.net/310419663032574653/Pha3yvm4xNX2ySLS98jSEw/帝豪Logo_9eea1077.jpg";
+const CHINATOWN_LOGO = "/logos/chinatown-transparent.png";
+const DIHAO_LOGO = "/logos/empire-transparent.png";
 const SAMPLE_POSTER = "https://d2xsxph8kpxj0f.cloudfront.net/310419663032574653/Pha3yvm4xNX2ySLS98jSEw/S__29811458_0_54e44c60.jpg";
 
 const features = [
@@ -85,7 +85,6 @@ export default function Home() {
                     className="h-24 sm:h-28 w-auto object-contain"
                     style={{
                       filter: "drop-shadow(0 0 12px rgba(201,168,76,0.4))",
-                      mixBlendMode: "screen",
                     }}
                   />
                 </div>
@@ -121,7 +120,6 @@ export default function Home() {
                     className="h-24 sm:h-28 w-auto object-contain"
                     style={{
                       filter: "drop-shadow(0 0 12px rgba(201,168,76,0.4))",
-                      mixBlendMode: "screen",
                     }}
                   />
                 </div>
