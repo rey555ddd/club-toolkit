@@ -121,7 +121,7 @@ async function tryGeminiImageModel(apiKey: string, prompt: string): Promise<stri
     const client = getGeminiClient(apiKey);
     // @ts-expect-error - responseModalities is experimental API
     const model = client.getGenerativeModel({
-      model: "gemini-2.5-flash-preview-image-generation",
+      model: "gemini-2.5-flash-image",
       generationConfig: {
         responseModalities: ["IMAGE", "TEXT"],
       },
@@ -139,10 +139,10 @@ async function tryGeminiImageModel(apiKey: string, prompt: string): Promise<stri
       }
     }
 
-    console.error("[GeminiImage25] No inline image in response, parts:", parts.length);
+    console.error("[gemini-2.5-flash-image] No inline image in response, parts:", parts.length);
     return null;
   } catch (e) {
-    console.error("[GeminiImage25] Error:", e);
+    console.error("[gemini-2.5-flash-image] Error:", e);
     return null;
   }
 }
@@ -150,7 +150,7 @@ async function tryGeminiImageModel(apiKey: string, prompt: string): Promise<stri
 async function tryGemini20ImageModel(apiKey: string, prompt: string): Promise<string | null> {
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -209,17 +209,17 @@ async function geminiGenerateImage(apiKey: string, prompt: string): Promise<stri
     return imagen4Result;
   }
 
-  console.log("[Image] Imagen 4 失敗，改用 gemini-2.5-flash-preview-image-generation fallback");
+  console.log("[Image] Imagen 4 失敗，改用 gemini-2.5-flash-image fallback");
   const geminiImageResult = await tryGeminiImageModel(apiKey, prompt);
   if (geminiImageResult) {
-    console.log("[Image] gemini-2.5-flash-preview-image-generation 成功");
+    console.log("[Image] gemini-2.5-flash-image 成功");
     return geminiImageResult;
   }
 
-  console.log("[Image] 嘗試 gemini-2.0-flash-exp-image-generation fallback...");
+  console.log("[Image] 嘗試 gemini-2.0-flash-lite image fallback...");
   const gemini20Result = await tryGemini20ImageModel(apiKey, prompt);
   if (gemini20Result) {
-    console.log("[Image] gemini-2.0-flash-exp-image-generation 成功");
+    console.log("[Image] gemini-2.0-flash-lite 成功");
     return gemini20Result;
   }
 
