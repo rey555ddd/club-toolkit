@@ -76,16 +76,17 @@ export default function Home() {
                 <div
                   className="p-4 rounded-xl transition-all duration-500 group-hover:scale-105"
                   style={{
-                    background: "rgba(201,168,76,0.06)",
-                    border: "1px solid rgba(201,168,76,0.2)",
-                    boxShadow: "0 0 30px rgba(201,168,76,0.1)",
+                    background: "transparent",
                   }}
                 >
                   <img
                     src={CHINATOWN_LOGO}
                     alt="中國城經典酒店"
                     className="h-24 sm:h-28 w-auto object-contain"
-                    style={{ filter: "drop-shadow(0 0 12px rgba(201,168,76,0.4))" }}
+                    style={{
+                      filter: "drop-shadow(0 0 12px rgba(201,168,76,0.4))",
+                      mixBlendMode: "screen",
+                    }}
                   />
                 </div>
                 <div className="text-center">
@@ -111,16 +112,17 @@ export default function Home() {
                 <div
                   className="p-4 rounded-xl transition-all duration-500 group-hover:scale-105"
                   style={{
-                    background: "rgba(201,168,76,0.06)",
-                    border: "1px solid rgba(201,168,76,0.2)",
-                    boxShadow: "0 0 30px rgba(201,168,76,0.1)",
+                    background: "transparent",
                   }}
                 >
                   <img
                     src={DIHAO_LOGO}
                     alt="帝豪酒店"
                     className="h-24 sm:h-28 w-auto object-contain"
-                    style={{ filter: "drop-shadow(0 0 12px rgba(201,168,76,0.4))" }}
+                    style={{
+                      filter: "drop-shadow(0 0 12px rgba(201,168,76,0.4))",
+                      mixBlendMode: "screen",
+                    }}
                   />
                 </div>
                 <div className="text-center">

@@ -36,7 +36,10 @@ export default function Navbar() {
                 src={CHINATOWN_LOGO}
                 alt="中國城經典酒店"
                 className="h-8 w-auto object-contain"
-                style={{ filter: "drop-shadow(0 0 6px rgba(201,168,76,0.5))" }}
+                style={{
+                  filter: "drop-shadow(0 0 6px rgba(201,168,76,0.5))",
+                  mixBlendMode: "screen",
+                }}
               />
               <span
                 className="text-xs font-light tracking-widest"
@@ -48,7 +51,10 @@ export default function Navbar() {
                 src={DIHAO_LOGO}
                 alt="帝豪酒店"
                 className="h-8 w-auto object-contain"
-                style={{ filter: "drop-shadow(0 0 6px rgba(201,168,76,0.5))" }}
+                style={{
+                  filter: "drop-shadow(0 0 6px rgba(201,168,76,0.5))",
+                  mixBlendMode: "screen",
+                }}
               />
             </div>
           </Link>
