@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import {
@@ -10,12 +10,22 @@ import {
   X,
   Check,
   ChevronDown,
+  Type,
+  Wand2,
+  Pencil,
 } from "lucide-react";
 
 type Hotel = "chinatown" | "dihao" | "both";
 type PosterStyle = "neon_electronic" | "luxury_gold" | "festival_red" | "modern_minimal";
 type PersonStyle = "elegant" | "sweet" | "fashionable" | "graceful" | "cool";
 type SceneType = "vip_room" | "dance_floor" | "bar_counter" | "red_carpet";
+
+interface PosterText {
+  title: string;
+  subtitle: string;
+  info: string;
+  cta: string;
+}
 
 const hotelOptions = [
   { id: "chinatown" as Hotel, label: "中國城經典酒店" },
@@ -84,7 +94,202 @@ const effectOptions = [
   "增加社群曝光", "小姐曝光度提升", "品牌形象強化",
 ];
 
-// 自訂 Select 元件
+// ─── Canvas text rendering with effects ──────────────────────────────────
+function renderTextOnCanvas(
+  baseImageUrl: string,
+  text: PosterText,
+  style: PosterStyle,
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      // Poster at 9:16 ratio, using image natural dimensions
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { reject("canvas error"); return; }
+
+      ctx.drawImage(img, 0, 0);
+
+      const W = canvas.width;
+      const H = canvas.height;
+
+      // Style-specific text configs
+      const styleConfigs: Record<PosterStyle, {
+        titleColor: string;
+        titleShadow: string;
+        titleStroke?: string;
+        subtitleColor: string;
+        infoColor: string;
+        ctaGradient?: [string, string];
+        ctaBg: string;
+        ctaTextColor: string;
+        glowColor?: string;
+        glowBlur?: number;
+      }> = {
+        neon_electronic: {
+          titleColor: "#e0b0ff",
+          titleShadow: "rgba(192, 132, 252, 0.9)",
+          subtitleColor: "#c0e8ff",
+          infoColor: "rgba(200, 210, 255, 0.85)",
+          ctaBg: "rgba(192, 132, 252, 0.25)",
+          ctaTextColor: "#e8d0ff",
+          glowColor: "rgba(160, 100, 252, 0.8)",
+          glowBlur: 25,
+        },
+        luxury_gold: {
+          titleColor: "#ffd700",
+          titleShadow: "rgba(180, 140, 20, 0.6)",
+          titleStroke: "#8B6914",
+          subtitleColor: "#ffe8a0",
+          infoColor: "rgba(255, 240, 200, 0.8)",
+          ctaBg: "rgba(240, 192, 64, 0.2)",
+          ctaTextColor: "#ffd700",
+          glowColor: "rgba(255, 200, 50, 0.5)",
+          glowBlur: 15,
+        },
+        festival_red: {
+          titleColor: "#ff4060",
+          titleShadow: "rgba(200, 50, 50, 0.7)",
+          subtitleColor: "#ffd700",
+          infoColor: "rgba(255, 220, 180, 0.85)",
+          ctaBg: "rgba(255, 64, 96, 0.25)",
+          ctaTextColor: "#ffd700",
+          glowColor: "rgba(255, 80, 80, 0.6)",
+          glowBlur: 18,
+        },
+        modern_minimal: {
+          titleColor: "#ffffff",
+          titleShadow: "rgba(0, 0, 0, 0.6)",
+          subtitleColor: "rgba(255,255,255,0.8)",
+          infoColor: "rgba(255,255,255,0.6)",
+          ctaBg: "rgba(255,255,255,0.1)",
+          ctaTextColor: "#ffffff",
+          glowBlur: 0,
+        },
+      };
+
+      const cfg = styleConfigs[style];
+
+      // Semi-transparent bottom gradient overlay for text readability
+      const grad = ctx.createLinearGradient(0, H * 0.45, 0, H);
+      grad.addColorStop(0, "rgba(0,0,0,0)");
+      grad.addColorStop(0.4, "rgba(0,0,0,0.35)");
+      grad.addColorStop(1, "rgba(0,0,0,0.85)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, H * 0.45, W, H * 0.55);
+
+      // Text layout from bottom up
+      ctx.textAlign = "center";
+
+      const titleSize = Math.round(W * 0.078);
+      const subtitleSize = Math.round(W * 0.042);
+      const infoSize = Math.round(W * 0.032);
+      const ctaSize = Math.round(W * 0.034);
+
+      // CTA (bottom-most)
+      if (text.cta) {
+        const ctaY = H * 0.92;
+        ctx.font = `bold ${ctaSize}px "Noto Sans TC", sans-serif`;
+        // CTA pill background
+        const ctaMetrics = ctx.measureText(text.cta);
+        const pillW = ctaMetrics.width + ctaSize * 2.5;
+        const pillH = ctaSize * 2.2;
+        ctx.fillStyle = cfg.ctaBg;
+        ctx.beginPath();
+        const pillX = W / 2 - pillW / 2;
+        const pillY2 = ctaY - pillH / 2;
+        const r = pillH / 2;
+        ctx.moveTo(pillX + r, pillY2);
+        ctx.lineTo(pillX + pillW - r, pillY2);
+        ctx.quadraticCurveTo(pillX + pillW, pillY2, pillX + pillW, pillY2 + r);
+        ctx.quadraticCurveTo(pillX + pillW, pillY2 + pillH, pillX + pillW - r, pillY2 + pillH);
+        ctx.lineTo(pillX + r, pillY2 + pillH);
+        ctx.quadraticCurveTo(pillX, pillY2 + pillH, pillX, pillY2 + r);
+        ctx.quadraticCurveTo(pillX, pillY2, pillX + r, pillY2);
+        ctx.closePath();
+        ctx.fill();
+        // Border
+        ctx.strokeStyle = cfg.ctaTextColor + "40";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        // CTA text
+        ctx.fillStyle = cfg.ctaTextColor;
+        ctx.fillText(text.cta, W / 2, ctaY + ctaSize * 0.35);
+      }
+
+      // Info line
+      if (text.info) {
+        const infoY = H * 0.845;
+        ctx.font = `${infoSize}px "Noto Sans TC", sans-serif`;
+        ctx.fillStyle = cfg.infoColor;
+        ctx.shadowColor = "rgba(0,0,0,0.5)";
+        ctx.shadowBlur = 4;
+        ctx.fillText(text.info, W / 2, infoY);
+        ctx.shadowBlur = 0;
+      }
+
+      // Subtitle
+      if (text.subtitle) {
+        const subY = H * 0.77;
+        ctx.font = `600 ${subtitleSize}px "Noto Sans TC", sans-serif`;
+        ctx.fillStyle = cfg.subtitleColor;
+        ctx.shadowColor = "rgba(0,0,0,0.4)";
+        ctx.shadowBlur = 6;
+        ctx.fillText(text.subtitle, W / 2, subY);
+        ctx.shadowBlur = 0;
+      }
+
+      // Title — the main effect text
+      if (text.title) {
+        const titleY = H * 0.68;
+        ctx.font = `900 ${titleSize}px "Noto Sans TC", sans-serif`;
+
+        // Glow effect
+        if (cfg.glowColor && cfg.glowBlur) {
+          ctx.shadowColor = cfg.glowColor;
+          ctx.shadowBlur = cfg.glowBlur;
+          // Draw multiple times for stronger glow
+          ctx.fillStyle = cfg.titleColor;
+          ctx.fillText(text.title, W / 2, titleY);
+          ctx.fillText(text.title, W / 2, titleY);
+        }
+
+        // Stroke for depth
+        if (cfg.titleStroke) {
+          ctx.strokeStyle = cfg.titleStroke;
+          ctx.lineWidth = 2;
+          ctx.shadowBlur = 0;
+          ctx.strokeText(text.title, W / 2, titleY);
+        }
+
+        // Final fill
+        ctx.shadowColor = cfg.titleShadow;
+        ctx.shadowBlur = cfg.glowBlur ? cfg.glowBlur / 2 : 4;
+        ctx.fillStyle = cfg.titleColor;
+        ctx.fillText(text.title, W / 2, titleY);
+        ctx.shadowBlur = 0;
+
+        // Decorative line under title
+        const lineW = Math.min(ctx.measureText(text.title).width * 0.6, W * 0.5);
+        ctx.strokeStyle = cfg.titleColor + "40";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(W / 2 - lineW / 2, titleY + titleSize * 0.5);
+        ctx.lineTo(W / 2 + lineW / 2, titleY + titleSize * 0.5);
+        ctx.stroke();
+      }
+
+      resolve(canvas.toDataURL("image/png", 0.95));
+    };
+    img.onerror = () => reject("image load error");
+    img.src = baseImageUrl;
+  });
+}
+
+// ─── Custom Select component ──────────────────────────────────────────────
 function SelectDropdown<T extends string>({
   value,
   onChange,
@@ -191,6 +396,7 @@ function SelectDropdown<T extends string>({
   );
 }
 
+// ─── Main component ──────────────────────────────────────────────────────
 export default function Poster() {
   const [selectedHotel, setSelectedHotel] = useState<Hotel>("chinatown");
   const [selectedStyle, setSelectedStyle] = useState<PosterStyle>("neon_electronic");
@@ -205,8 +411,18 @@ export default function Poster() {
   const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState<string | null>(null);
   const [uploadedPhotoPreview, setUploadedPhotoPreview] = useState<string | null>(null);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
+  const [finalPosterUrl, setFinalPosterUrl] = useState<string | null>(null);
   const [generationCount, setGenerationCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Poster text state
+  const [posterText, setPosterText] = useState<PosterText>({
+    title: "",
+    subtitle: "",
+    info: "",
+    cta: "",
+  });
+  const [isTextEditing, setIsTextEditing] = useState(false);
 
   const uploadMutation = trpc.poster.uploadPhoto.useMutation({
     onSuccess: (data) => {
@@ -222,11 +438,51 @@ export default function Poster() {
     onSuccess: (data) => {
       setGeneratedImageUrl(data.imageBase64 ?? null);
       setGenerationCount((c) => c + 1);
+      // If text is set, auto-compose
+      if (posterText.title || posterText.subtitle) {
+        // Will be handled by effect
+      }
     },
     onError: (err) => {
       toast.error("生成失敗：" + err.message);
     },
   });
+
+  // AI suggest copy mutation
+  const suggestCopyMutation = trpc.poster.suggestCopy.useMutation({
+    onSuccess: (data) => {
+      setPosterText({
+        title: data.title,
+        subtitle: data.subtitle,
+        info: data.info,
+        cta: data.cta,
+      });
+      toast.success("AI 文案推薦完成！可自由編輯修改");
+    },
+    onError: (err) => {
+      toast.error("文案推薦失敗：" + err.message);
+    },
+  });
+
+  // Auto-compose text onto image when either changes
+  const composePoster = useCallback(async () => {
+    if (!generatedImageUrl) return;
+    const hasText = posterText.title || posterText.subtitle || posterText.info || posterText.cta;
+    if (!hasText) {
+      setFinalPosterUrl(generatedImageUrl);
+      return;
+    }
+    try {
+      const result = await renderTextOnCanvas(generatedImageUrl, posterText, selectedStyle);
+      setFinalPosterUrl(result);
+    } catch {
+      setFinalPosterUrl(generatedImageUrl);
+    }
+  }, [generatedImageUrl, posterText, selectedStyle]);
+
+  useEffect(() => {
+    composePoster();
+  }, [composePoster]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -268,13 +524,32 @@ export default function Poster() {
       effects: selectedEffects,
       personStyle: selectedPersonStyle || undefined,
       scene: selectedScene || undefined,
+      excludeText: true,
+    });
+  };
+
+  const handleSuggestCopy = () => {
+    const theme = customTheme || selectedTheme;
+    if (!theme) {
+      toast.error("請先選擇活動主題，AI 才能推薦文案");
+      return;
+    }
+
+    const hotelName = hotelOptions.find((h) => h.id === selectedHotel)?.label ?? "酒店";
+    suggestCopyMutation.mutate({
+      hotel: selectedHotel,
+      hotelName,
+      theme,
+      features: selectedFeatures,
+      style: selectedStyle,
     });
   };
 
   const handleDownload = () => {
-    if (!generatedImageUrl) return;
+    const url = finalPosterUrl || generatedImageUrl;
+    if (!url) return;
     const link = document.createElement("a");
-    link.href = generatedImageUrl;
+    link.href = url;
     link.download = `poster-${Date.now()}.png`;
     link.target = "_blank";
     link.click();
@@ -293,6 +568,7 @@ export default function Poster() {
   };
 
   const currentStyle = posterStyles.find((s) => s.id === selectedStyle)!;
+  const displayImage = finalPosterUrl || generatedImageUrl;
 
   return (
     <div
@@ -314,7 +590,7 @@ export default function Poster() {
             </h1>
           </div>
           <p className="text-sm ml-11" style={{ color: "rgba(255,255,255,0.45)" }}>
-            上傳照片或 AI 生成人物，快速產出高質感宣傳海報
+            AI 生成海報底圖 + 自訂特效字，打造高質感宣傳海報
           </p>
         </div>
 
@@ -434,81 +710,225 @@ export default function Poster() {
               />
             </div>
 
-            {/* 內容特色 */}
+            {/* ★ 海報文案（新增） */}
             <div
               className="p-5 rounded-xl"
-              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(201,168,76,0.15)" }}
+              style={{
+                background: "rgba(255,255,255,0.03)",
+                border: `1px solid ${currentStyle.accent}25`,
+              }}
             >
-              <h2 className="text-sm font-semibold mb-3" style={{ color: "rgba(255,255,255,0.7)" }}>
-                內容特色
-                {selectedFeatures.length > 0 && (
-                  <span
-                    className="ml-2 px-1.5 py-0.5 rounded text-xs"
-                    style={{ background: "rgba(192,132,252,0.15)", color: "#c084fc" }}
-                  >
-                    {selectedFeatures.length} 個
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Type size={14} style={{ color: currentStyle.accent }} />
+                  <h2 className="text-sm font-semibold" style={{ color: "rgba(255,255,255,0.7)" }}>
+                    海報文案
+                  </h2>
+                  <span className="px-1.5 py-0.5 rounded text-[10px]"
+                    style={{ background: `${currentStyle.accent}15`, color: currentStyle.accent }}>
+                    特效字
                   </span>
-                )}
-              </h2>
-              <div className="flex flex-wrap gap-2">
-                {featureOptions.map((f) => {
-                  const isSelected = selectedFeatures.includes(f);
-                  return (
-                    <button
-                      key={f}
-                      onClick={() => toggleFeature(f)}
-                      className="px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+                </div>
+                <button
+                  onClick={handleSuggestCopy}
+                  disabled={suggestCopyMutation.isPending || (!selectedTheme && !customTheme)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                  style={{
+                    background: suggestCopyMutation.isPending
+                      ? "rgba(255,255,255,0.03)"
+                      : `${currentStyle.accent}12`,
+                    border: `1px solid ${currentStyle.accent}30`,
+                    color: currentStyle.accent,
+                    opacity: (!selectedTheme && !customTheme) ? 0.4 : 1,
+                    cursor: (!selectedTheme && !customTheme) ? "not-allowed" : "pointer",
+                  }}
+                >
+                  {suggestCopyMutation.isPending ? (
+                    <><RefreshCw size={12} className="animate-spin" /> 推薦中...</>
+                  ) : (
+                    <><Wand2 size={12} /> AI 推薦文案</>
+                  )}
+                </button>
+              </div>
+
+              <p className="text-xs mb-3" style={{ color: "rgba(255,255,255,0.35)" }}>
+                輸入文字會以「{currentStyle.label}」特效字渲染在海報上。可先讓 AI 推薦，再自行修改。
+              </p>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs mb-1 block" style={{ color: "rgba(255,255,255,0.45)" }}>
+                    主標題
+                  </label>
+                  <input
+                    type="text"
+                    value={posterText.title}
+                    onChange={(e) => setPosterText((p) => ({ ...p, title: e.target.value }))}
+                    placeholder="例：電音派對夜"
+                    maxLength={15}
+                    className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-all"
+                    style={{
+                      background: "rgba(255,255,255,0.05)",
+                      border: `1px solid ${currentStyle.accent}20`,
+                      color: "rgba(255,255,255,0.9)",
+                      fontWeight: 700,
+                    }}
+                    onFocus={(e) => { e.target.style.borderColor = `${currentStyle.accent}50`; }}
+                    onBlur={(e) => { e.target.style.borderColor = `${currentStyle.accent}20`; }}
+                  />
+                  <span className="text-[10px] mt-0.5 block" style={{ color: "rgba(255,255,255,0.25)" }}>
+                    {posterText.title.length}/15 字
+                  </span>
+                </div>
+
+                <div>
+                  <label className="text-xs mb-1 block" style={{ color: "rgba(255,255,255,0.45)" }}>
+                    副標題
+                  </label>
+                  <input
+                    type="text"
+                    value={posterText.subtitle}
+                    onChange={(e) => setPosterText((p) => ({ ...p, subtitle: e.target.value }))}
+                    placeholder="例：今晚不劉不歸"
+                    maxLength={20}
+                    className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-all"
+                    style={{
+                      background: "rgba(255,255,255,0.04)",
+                      border: "1px solid rgba(201,168,76,0.15)",
+                      color: "rgba(255,255,255,0.8)",
+                    }}
+                    onFocus={(e) => { e.target.style.borderColor = `${currentStyle.accent}40`; }}
+                    onBlur={(e) => { e.target.style.borderColor = "rgba(201,168,76,0.15)"; }}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs mb-1 block" style={{ color: "rgba(255,255,255,0.45)" }}>
+                      活動資訊
+                    </label>
+                    <input
+                      type="text"
+                      value={posterText.info}
+                      onChange={(e) => setPosterText((p) => ({ ...p, info: e.target.value }))}
+                      placeholder="日期 / 地點 / 電話"
+                      maxLength={30}
+                      className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-all"
                       style={{
-                        background: isSelected ? "rgba(192,132,252,0.15)" : "rgba(255,255,255,0.04)",
-                        border: `1px solid ${isSelected ? "rgba(192,132,252,0.4)" : "rgba(255,255,255,0.08)"}`,
-                        color: isSelected ? "#c084fc" : "rgba(255,255,255,0.55)",
+                        background: "rgba(255,255,255,0.04)",
+                        border: "1px solid rgba(201,168,76,0.15)",
+                        color: "rgba(255,255,255,0.8)",
                       }}
-                    >
-                      {isSelected && "✓ "}
-                      {f}
-                    </button>
-                  );
-                })}
+                      onFocus={(e) => { e.target.style.borderColor = `${currentStyle.accent}40`; }}
+                      onBlur={(e) => { e.target.style.borderColor = "rgba(201,168,76,0.15)"; }}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs mb-1 block" style={{ color: "rgba(255,255,255,0.45)" }}>
+                      行動呼粡
+                    </label>
+                    <input
+                      type="text"
+                      value={posterText.cta}
+                      onChange={(e) => setPosterText((p) => ({ ...p, cta: e.target.value }))}
+                      placeholder="例：立即訂位"
+                      maxLength={10}
+                      className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-all"
+                      style={{
+                        background: "rgba(255,255,255,0.04)",
+                        border: "1px solid rgba(201,168,76,0.15)",
+                        color: "rgba(255,255,255,0.8)",
+                      }}
+                      onFocus={(e) => { e.target.style.borderColor = `${currentStyle.accent}40`; }}
+                      onBlur={(e) => { e.target.style.borderColor = "rgba(201,168,76,0.15)"; }}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* 預期效果 */}
-            <div
-              className="p-5 rounded-xl"
-              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(201,168,76,0.15)" }}
-            >
-              <h2 className="text-sm font-semibold mb-3" style={{ color: "rgba(255,255,255,0.7)" }}>
-                預期效果
-                {selectedEffects.length > 0 && (
-                  <span
-                    className="ml-2 px-1.5 py-0.5 rounded text-xs"
-                    style={{ background: "rgba(52,211,153,0.15)", color: "#34d399" }}
-                  >
-                    {selectedEffects.length} 個
-                  </span>
-                )}
-              </h2>
-              <div className="flex flex-wrap gap-2">
-                {effectOptions.map((ef) => {
-                  const isSelected = selectedEffects.includes(ef);
-                  return (
-                    <button
-                      key={ef}
-                      onClick={() => toggleEffect(ef)}
-                      className="px-3 py-1.5 rounded-full text-xs font-medium transition-all"
-                      style={{
-                        background: isSelected ? "rgba(52,211,153,0.15)" : "rgba(255,255,255,0.04)",
-                        border: `1px solid ${isSelected ? "rgba(52,211,153,0.4)" : "rgba(255,255,255,0.08)"}`,
-                        color: isSelected ? "#34d399" : "rgba(255,255,255,0.55)",
-                      }}
-                    >
-                      {isSelected && "✓ "}
-                      {ef}
-                    </button>
-                  );
-                })}
+            {/* 內容特色 + 預期效果 (collapsed) */}
+            <details className="group">
+              <summary
+                className="p-4 rounded-xl cursor-pointer list-none flex items-center justify-between"
+                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(201,168,76,0.15)" }}
+              >
+                <span className="text-sm font-semibold" style={{ color: "rgba(255,255,255,0.6)" }}>
+                  進階設定
+                  {(selectedFeatures.length + selectedEffects.length) > 0 && (
+                    <span className="ml-2 px-1.5 py-0.5 rounded text-xs"
+                      style={{ background: "rgba(192,132,252,0.15)", color: "#c084fc" }}>
+                      {selectedFeatures.length + selectedEffects.length} 個已選
+                    </span>
+                  )}
+                </span>
+                <ChevronDown size={14}
+                  className="transition-transform group-open:rotate-180"
+                  style={{ color: "rgba(255,255,255,0.3)" }}
+                />
+              </summary>
+              <div className="mt-3 space-y-4">
+                {/* 內容特色 */}
+                <div
+                  className="p-5 rounded-xl"
+                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(201,168,76,0.15)" }}
+                >
+                  <h2 className="text-sm font-semibold mb-3" style={{ color: "rgba(255,255,255,0.7)" }}>
+                    內容特色
+                  </h2>
+                  <div className="flex flex-wrap gap-2">
+                    {featureOptions.map((f) => {
+                      const isSelected = selectedFeatures.includes(f);
+                      return (
+                        <button
+                          key={f}
+                          onClick={() => toggleFeature(f)}
+                          className="px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+                          style={{
+                            background: isSelected ? "rgba(192,132,252,0.15)" : "rgba(255,255,255,0.04)",
+                            border: `1px solid ${isSelected ? "rgba(192,132,252,0.4)" : "rgba(255,255,255,0.08)"}`,
+                            color: isSelected ? "#c084fc" : "rgba(255,255,255,0.55)",
+                          }}
+                        >
+                          {isSelected && "✓ "}
+                          {f}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 預期效果 */}
+                <div
+                  className="p-5 rounded-xl"
+                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(201,168,76,0.15)" }}
+                >
+                  <h2 className="text-sm font-semibold mb-3" style={{ color: "rgba(255,255,255,0.7)" }}>
+                    預期效果
+                  </h2>
+                  <div className="flex flex-wrap gap-2">
+                    {effectOptions.map((ef) => {
+                      const isSelected = selectedEffects.includes(ef);
+                      return (
+                        <button
+                          key={ef}
+                          onClick={() => toggleEffect(ef)}
+                          className="px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+                          style={{
+                            background: isSelected ? "rgba(52,211,153,0.15)" : "rgba(255,255,255,0.04)",
+                            border: `1px solid ${isSelected ? "rgba(52,211,153,0.4)" : "rgba(255,255,255,0.08)"}`,
+                            color: isSelected ? "#34d399" : "rgba(255,255,255,0.55)",
+                          }}
+                        >
+                          {isSelected && "✓ "}
+                          {ef}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
-            </div>
+            </details>
 
             {/* 人物設定 */}
             <div
@@ -547,7 +967,7 @@ export default function Poster() {
                 </button>
               </div>
 
-              {/* AI 生成模式：人物氣質選擇 */}
+              {/* AI 生成模式 */}
               {!useUploadedPhoto && (
                 <div className="space-y-3">
                   <div>
@@ -633,7 +1053,7 @@ export default function Poster() {
               )}
             </div>
 
-            {/* 場景選擇 */}
+            {/* 場景 + 補充說明 */}
             <div
               className="p-5 rounded-xl"
               style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(201,168,76,0.15)" }}
@@ -647,30 +1067,25 @@ export default function Poster() {
                 options={sceneOptions}
                 placeholder="選擇場景（選填）"
               />
-            </div>
-
-            {/* 補充說明 */}
-            <div
-              className="p-5 rounded-xl"
-              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(201,168,76,0.15)" }}
-            >
-              <h2 className="text-sm font-semibold mb-2" style={{ color: "rgba(255,255,255,0.7)" }}>
-                補充說明（選填）
-              </h2>
-              <textarea
-                value={customPrompt}
-                onChange={(e) => setCustomPrompt(e.target.value)}
-                placeholder="例如：要有試管調酒的道具、背景要有摩天輪、文字要有電話號碼..."
-                rows={3}
-                className="w-full px-3 py-2.5 rounded-lg text-sm resize-none outline-none transition-all"
-                style={{
-                  background: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(201,168,76,0.15)",
-                  color: "rgba(255,255,255,0.8)",
-                }}
-                onFocus={(e) => { e.target.style.borderColor = "rgba(192,132,252,0.4)"; }}
-                onBlur={(e) => { e.target.style.borderColor = "rgba(201,168,76,0.15)"; }}
-              />
+              <div className="mt-4">
+                <h2 className="text-sm font-semibold mb-2" style={{ color: "rgba(255,255,255,0.7)" }}>
+                  補充說明（選填）
+                </h2>
+                <textarea
+                  value={customPrompt}
+                  onChange={(e) => setCustomPrompt(e.target.value)}
+                  placeholder="例如：要有試管調酒的道具、背景要有摩天輪..."
+                  rows={2}
+                  className="w-full px-3 py-2.5 rounded-lg text-sm resize-none outline-none transition-all"
+                  style={{
+                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(201,168,76,0.15)",
+                    color: "rgba(255,255,255,0.8)",
+                  }}
+                  onFocus={(e) => { e.target.style.borderColor = "rgba(192,132,252,0.4)"; }}
+                  onBlur={(e) => { e.target.style.borderColor = "rgba(201,168,76,0.15)"; }}
+                />
+              </div>
             </div>
 
             {/* 生成按鈕 */}
@@ -733,7 +1148,7 @@ export default function Poster() {
                     </span>
                   )}
                 </span>
-                {generatedImageUrl && (
+                {displayImage && (
                   <button
                     onClick={handleDownload}
                     className="flex items-center gap-1.5 px-3 py-1 rounded text-xs transition-all"
@@ -758,19 +1173,19 @@ export default function Poster() {
                     />
                     <div className="text-center">
                       <p className="text-sm font-medium" style={{ color: "rgba(255,255,255,0.6)" }}>
-                        AI 正在創作海報...
+                        AI 正在創作海報底圖...
                       </p>
                       <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.3)" }}>
-                        這需要約 15-30 秒，請稍候
+                        生成後會自動合成特效字，約需 15-30 秒
                       </p>
                     </div>
                   </div>
-                ) : generatedImageUrl ? (
+                ) : displayImage ? (
                   <div className="w-full flex flex-col items-center gap-4">
                     <img
-                      src={generatedImageUrl}
+                      src={displayImage}
                       alt="生成的海報"
-                      className="w-full max-w-xs rounded-xl object-contain"
+                      className="w-full maw-w-xs rounded-xl object-contain"
                       style={{
                         border: "1px solid rgba(201,168,76,0.25)",
                         boxShadow: `0 0 40px ${currentStyle.accent}20`,
@@ -787,7 +1202,7 @@ export default function Poster() {
                         }}
                       >
                         <RefreshCw size={13} />
-                        再生成一張
+                        換底圖
                       </button>
                       <button
                         onClick={handleDownload}
@@ -802,6 +1217,13 @@ export default function Poster() {
                         下載海報
                       </button>
                     </div>
+                    {/* Quick text edit hint */}
+                    {!(posterText.title || posterText.subtitle) && (
+                      <p className="text-xs text-center" style={{ color: "rgba(255,255,255,0.3)" }}>
+                        <Pencil size={11} className="inline mr-1" />
+                        左側「海報文案」輸入文字，會自動套用特效字到海報上
+                      </p>
+                    )}
                   </div>
                 ) : (
                   <div className="flex flex-col items-center gap-3 text-center">
@@ -817,7 +1239,7 @@ export default function Poster() {
                       點擊「生成海報」
                     </p>
                     <p className="text-xs" style={{ color: "rgba(255,255,255,0.2)" }}>
-                      支援多次重新生成，直到滿意為止
+                      AI 生成底圖 + 你打的字 = 完美海報
                     </p>
                   </div>
                 )}
@@ -836,7 +1258,7 @@ export default function Poster() {
                 目前風格：{currentStyle.label}
               </p>
               <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.4)" }}>
-                {currentStyle.desc}。每次生成結果都不同，可多次嘗試找到最滿意的版本。
+                {currentStyle.desc}。文字會自動套用對應風格的特效字渲染。
               </p>
             </div>
           </div>
