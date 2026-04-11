@@ -535,10 +535,10 @@ export default function Poster() {
       return;
     }
 
-    const hotelName = hotelOptions.find((h) => h.id === selectedHotel)?.label ?? "酒店";
+    const hotel = hotelOptions.find((h) => h.id === selectedHotel)?.label ?? "酒店";
     suggestCopyMutation.mutate({
       hotel: selectedHotel,
-      hotelName,
+      hotel,
       theme,
       features: selectedFeatures,
       style: selectedStyle,
