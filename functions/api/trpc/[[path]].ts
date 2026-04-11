@@ -202,28 +202,28 @@ async function tryGemini20ImageModel(apiKey: string, prompt: string): Promise<st
 }
 
 async function geminiGenerateImage(apiKey: string, prompt: string): Promise<string | null> {
-  console.log("[Image] 嘗試 Imagen 4...");
+  console.log("[Image] åè©¦ Imagen 4...");
   const imagen4Result = await tryImagen4(apiKey, prompt);
   if (imagen4Result) {
-    console.log("[Image] Imagen 4 成功");
+    console.log("[Image] Imagen 4 æå");
     return imagen4Result;
   }
 
-  console.log("[Image] Imagen 4 失敗，改用 gemini-2.5-flash-image fallback");
+  console.log("[Image] Imagen 4 å¤±æï¼æ¹ç¨ gemini-2.5-flash-image fallback");
   const geminiImageResult = await tryGeminiImageModel(apiKey, prompt);
   if (geminiImageResult) {
-    console.log("[Image] gemini-2.5-flash-image 成功");
+    console.log("[Image] gemini-2.5-flash-image æå");
     return geminiImageResult;
   }
 
-  console.log("[Image] 嘗試 gemini-2.0-flash-lite image fallback...");
+  console.log("[Image] åè©¦ gemini-2.0-flash-lite image fallback...");
   const gemini20Result = await tryGemini20ImageModel(apiKey, prompt);
   if (gemini20Result) {
-    console.log("[Image] gemini-2.0-flash-lite 成功");
+    console.log("[Image] gemini-2.0-flash-lite æå");
     return gemini20Result;
   }
 
-  console.error("[Image] 所有圖片生成方式均失敗");
+  console.error("[Image] ææåççææ¹å¼åå¤±æ");
   return null;
 }
 
@@ -240,70 +240,70 @@ const copywriterRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       const typeLabels: Record<string, string> = {
-        recruitment: "徵員文案",
-        social: "社群貼文",
-        event: "活動宣傳文案",
-        lady_recruitment: "小姐招募文案",
-        call_client: "Call客文宣",
+        recruitment: "å¾µå¡ææ¡",
+        social: "ç¤¾ç¾¤è²¼æ",
+        event: "æ´»åå®£å³ææ¡",
+        lady_recruitment: "å°å§æåææ¡",
+        call_client: "Callå®¢æå®£",
       };
 
       const hotelInfo: Record<string, string> = {
-        chinatown: "中國城經典酒店（桃園市桃園區復興路99號8樓，電話 03-339-2188）",
-        dihao: "帝豪酒店（桃園市桃園區復興路99號6樓，電話 03-339-3666）",
-        both: "中國城經典酒店（8樓，03-339-2188）× 帝豪酒店（6樓，03-339-3666）",
+        chinatown: "ä¸­ååç¶å¸éåºï¼æ¡åå¸æ¡ååå¾©èè·¯99è8æ¨ï¼é»è©± 03-339-2188ï¼",
+        dihao: "å¸è±ªéåºï¼æ¡åå¸æ¡ååå¾©èè·¯99è6æ¨ï¼é»è©± 03-339-3666ï¼",
+        both: "ä¸­ååç¶å¸éåºï¼8æ¨ï¼03-339-2188ï¼Ã å¸è±ªéåºï¼6æ¨ï¼03-339-3666ï¼",
       };
 
       const typePrompts: Record<string, string> = {
-        recruitment: `你是一個在台灣八大行業酒店業工作多年的老手，現在幫店裡寫徵員文案。
-職缺包含：外場服務生、控台人員、服裝部助理、巡管人員、總務助理、水電師傅等。
-強調：高收入機會、彈性排班、完整教育訓練、優質工作環境、專人帶領快速上手。
-語氣：直接、務實、有說服力，不要太正式，要像老闆在跟朋友說話。`,
+        recruitment: `ä½ æ¯ä¸åå¨å°ç£å«å¤§è¡æ¥­éåºæ¥­å·¥ä½å¤å¹´çèæï¼ç¾å¨å¹«åºè£¡å¯«å¾µå¡ææ¡ã
+è·ç¼ºåå«ï¼å¤å ´æåçãæ§å°äººå¡ãæè£é¨å©çãå·¡ç®¡äººå¡ãç¸½åå©çãæ°´é»å¸«åç­ã
+å¼·èª¿ï¼é«æ¶å¥æ©æãå½æ§æç­ãå®æ´æè²è¨ç·´ãåªè³ªå·¥ä½ç°å¢ãå°äººå¸¶é å¿«éä¸æã
+èªæ°£ï¼ç´æ¥ãåå¯¦ãæèªªæåï¼ä¸è¦å¤ªæ­£å¼ï¼è¦åèéå¨è·æåèªªè©±ã`,
 
-        social: `你是一個懂得酒店業社群經營的小編，幫中國城/帝豪酒店寫 IG/FB 貼文。
-語氣：輕鬆、有個性、帶點神秘感，讓人想點進來看。
-不要太廣告感，要像在分享店裡的日常或氛圍。`,
+        social: `ä½ æ¯ä¸åæå¾éåºæ¥­ç¤¾ç¾¤ç¶ççå°ç·¨ï¼å¹«ä¸­åå/å¸è±ªéåºå¯« IG/FB è²¼æã
+èªæ°£ï¼è¼é¬ãæåæ§ãå¸¶é»ç¥ç§æï¼è®äººæ³é»é²ä¾çã
+ä¸è¦å¤ªå»£åæï¼è¦åå¨åäº«åºè£¡çæ¥å¸¸ææ°åã`,
 
-        event: `你是一個酒店業活動企劃，幫店裡寫活動宣傳文案。
-活動類型可能是：電音派對、試管調酒、摩天輪調酒、節日主題派對、VIP之夜等。
-語氣：有氣氛、有誘惑力、讓人想來玩，要有夜店感但不要俗氣。`,
+        event: `ä½ æ¯ä¸åéåºæ¥­æ´»åä¼åï¼å¹«åºè£¡å¯«æ´»åå®£å³ææ¡ã
+æ´»åé¡åå¯è½æ¯ï¼é»é³æ´¾å°ãè©¦ç®¡èª¿éãæ©å¤©è¼ªèª¿éãç¯æ¥ä¸»é¡æ´¾å°ãVIPä¹å¤ç­ã
+èªæ°£ï¼ææ°£æ°ãæèªæåãè®äººæ³ä¾ç©ï¼è¦æå¤åºæä½ä¸è¦ä¿æ°£ã`,
 
-        lady_recruitment: `你是一個在台灣八大行業工作的老手，幫酒店寫公關小姐招募文案。
-強調：高收入、自由排班、安全環境、專業帶領、不需要特殊技能、歡迎新人。
-語氣：真誠、直接，讓看到的女生覺得這是個好機會，不要太過花俏。
-可以提到：底薪保障、抽成制度、班表彈性、店裡氣氛好、姐妹情誼。`,
+        lady_recruitment: `ä½ æ¯ä¸åå¨å°ç£å«å¤§è¡æ¥­å·¥ä½çèæï¼å¹«éåºå¯«å¬éå°å§æåææ¡ã
+å¼·èª¿ï¼é«æ¶å¥ãèªç±æç­ãå®å¨ç°å¢ãå°æ¥­å¸¶é ãä¸éè¦ç¹æ®æè½ãæ­¡è¿æ°äººã
+èªæ°£ï¼çèª ãç´æ¥ï¼è®çå°çå¥³çè¦ºå¾éæ¯åå¥½æ©æï¼ä¸è¦å¤ªéè±ä¿ã
+å¯ä»¥æå°ï¼åºèªä¿éãæ½æå¶åº¦ãç­è¡¨å½æ§ãåºè£¡æ°£æ°å¥½ãå§å¦¹æèª¼ã`,
 
-        call_client: `你是一個酒店業的業務，幫店裡寫傳給老客人的 Call 客文宣。
-目的：讓老客人回來開番，勾起他們的回憶和慾望。
-語氣：像老朋友在傳訊息，親切、有點撩撲，讓人看了就想回來。
-可以提到：新活動、新的小姐、特別優惠、老客人專屬待遇。`,
+        call_client: `ä½ æ¯ä¸åéåºæ¥­çæ¥­åï¼å¹«åºè£¡å¯«å³çµ¦èå®¢äººç Call å®¢æå®£ã
+ç®çï¼è®èå®¢äººåä¾éçªï¼å¾èµ·ä»åçåæ¶åæ¾æã
+èªæ°£ï¼åèæåå¨å³è¨æ¯ï¼è¦ªåãæé»æ©æ²ï¼è®äººçäºå°±æ³åä¾ã
+å¯ä»¥æå°ï¼æ°æ´»åãæ°çå°å§ãç¹å¥åªæ ãèå®¢äººå°å±¬å¾éã`,
       };
 
       const elementsText = input.elements.length > 0
-        ? `\n\n使用者特別要求包含以下元素：${input.elements.join("、")}`
+        ? `\n\nä½¿ç¨èç¹å¥è¦æ±åå«ä»¥ä¸åç´ ï¼${input.elements.join("ã")}`
         : "";
 
       const customText = input.customNote
-        ? `\n\n使用者補充說明：${input.customNote}`
+        ? `\n\nä½¿ç¨èè£åèªªæï¼${input.customNote}`
         : "";
 
       const systemPrompt = `${typePrompts[input.type]}
 
-酒店資訊：${hotelInfo[input.hotel]}
+éåºè³è¨ï¼${hotelInfo[input.hotel]}
 
-【重要的文案風格規定】
-1. 絕對不要用 emoji 當標題或段落開頭
-2. 段落長短要刻意參差，有的長有的短，不要每段都差不多長
-3. 不要用這些萬用填充詞：「不僅如此」「值得一提的是」「總而言之」「此外」「另外」「同時」「更重要的是」
-4. 語氣要統一，不要一下正式一下口語
-5. 結尾不要太完美或太勵志，要自然收尾
-6. 整體語氣要直接、接地氣，符合台灣酒店業的說話方式
-7. 不要有 AI 生成的痕跡，要像真人在寫
-8. 可以用一些台灣口語，但不要過度
+ãéè¦çææ¡é¢¨æ ¼è¦å®ã
+1. çµå°ä¸è¦ç¨ emoji ç¶æ¨é¡ææ®µè½éé ­
+2. æ®µè½é·ç­è¦å»æåå·®ï¼æçé·æçç­ï¼ä¸è¦æ¯æ®µé½å·®ä¸å¤é·
+3. ä¸è¦ç¨éäºè¬ç¨å¡«åè©ï¼ãä¸åå¦æ­¤ããå¼å¾ä¸æçæ¯ããç¸½èè¨ä¹ããæ­¤å¤ããå¦å¤ããåæããæ´éè¦çæ¯ã
+4. èªæ°£è¦çµ±ä¸ï¼ä¸è¦ä¸ä¸æ­£å¼ä¸ä¸å£èª
+5. çµå°¾ä¸è¦å¤ªå®ç¾æå¤ªåµå¿ï¼è¦èªç¶æ¶å°¾
+6. æ´é«èªæ°£è¦ç´æ¥ãæ¥å°æ°£ï¼ç¬¦åå°ç£éåºæ¥­çèªªè©±æ¹å¼
+7. ä¸è¦æ AI çæççè·¡ï¼è¦åçäººå¨å¯«
+8. å¯ä»¥ç¨ä¸äºå°ç£å£èªï¼ä½ä¸è¦éåº¦
 ${elementsText}${customText}`;
 
       const content = await geminiGenerateText(ctx.env.GEMINI_API_KEY, {
         systemPrompt,
-        userPrompt: `請幫我寫一篇${typeLabels[input.type]}，大約 200-400 字。直接輸出文案內容，不要有任何前言或解釋。`,
+        userPrompt: `è«å¹«æå¯«ä¸ç¯${typeLabels[input.type]}ï¼å¤§ç´ 200-400 å­ãç´æ¥è¼¸åºææ¡å§å®¹ï¼ä¸è¦æä»»ä½åè¨æè§£éã`,
       });
 
       return { content };
@@ -325,35 +325,35 @@ const plannerRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       const hotelInfo: Record<string, string> = {
-        chinatown: "中國城經典酒店（桃園市桃園區復興路99號8樓，電話 03-339-2188）",
-        dihao: "帝豪酒店（桃園市桃園區復興路99號6樓，電話 03-339-3666）",
-        both: "中國城經典酒店（8樓，03-339-2188）× 帝豪酒店（6樓，03-339-3666）",
+        chinatown: "ä¸­ååç¶å¸éåºï¼æ¡åå¸æ¡ååå¾©èè·¯99è8æ¨ï¼é»è©± 03-339-2188ï¼",
+        dihao: "å¸è±ªéåºï¼æ¡åå¸æ¡ååå¾©èè·¯99è6æ¨ï¼é»è©± 03-339-3666ï¼",
+        both: "ä¸­ååç¶å¸éåºï¼8æ¨ï¼03-339-2188ï¼Ã å¸è±ªéåºï¼6æ¨ï¼03-339-3666ï¼",
       };
 
-      const systemPrompt = `你是一個在台灣八大行業酒店業工作超過十年的老手，專門負責活動企劃和行銷。
-你非常了解酒店業的生態、客人的心理、以及什麼樣的活動最能帶動業績。
+      const systemPrompt = `ä½ æ¯ä¸åå¨å°ç£å«å¤§è¡æ¥­éåºæ¥­å·¥ä½è¶éåå¹´çèæï¼å°éè² è²¬æ´»åä¼ååè¡é·ã
+ä½ éå¸¸äºè§£éåºæ¥­ççæãå®¢äººçå¿çãä»¥åä»éº¼æ¨£çæ´»åæè½å¸¶åæ¥­ç¸¾ã
 
-酒店資訊：${hotelInfo[input.hotel]}
+éåºè³è¨ï¼${hotelInfo[input.hotel]}
 
-請幫我規劃一個完整的活動企劃，包含以下內容：
-1. 活動主題與名稱
-2. 活動核心賣點（3-5個）
-3. 執行排程（活動前、活動中、活動後）
-4. 宣傳文案（可以成人向，符合酒店業風格）
-5. Call客策略（怎麼讓老客人回來）
-6. 預算建議（如果有提供預算範圍）
-7. 注意事項
+è«å¹«æè¦åä¸åå®æ´çæ´»åä¼åï¼åå«ä»¥ä¸å§å®¹ï¼
+1. æ´»åä¸»é¡èåç¨±
+2. æ´»åæ ¸å¿è³£é»ï¼3-5åï¼
+3. å·è¡æç¨ï¼æ´»ååãæ´»åä¸­ãæ´»åå¾ï¼
+4. å®£å³ææ¡ï¼å¯ä»¥æäººåï¼ç¬¦åéåºæ¥­é¢¨æ ¼ï¼
+5. Callå®¢ç­ç¥ï¼æéº¼è®èå®¢äººåä¾ï¼
+6. é ç®å»ºè­°ï¼å¦æææä¾é ç®ç¯åï¼
+7. æ³¨æäºé 
 
-語氣要專業但接地氣，像是老手在跟新人分享經驗。
-內容可以成人向，符合八大行業酒店的實際需求。`;
+èªæ°£è¦å°æ¥­ä½æ¥å°æ°£ï¼åæ¯èæå¨è·æ°äººåäº«ç¶é©ã
+å§å®¹å¯ä»¥æäººåï¼ç¬¦åå«å¤§è¡æ¥­éåºçå¯¦ééæ±ã`;
 
-      const userPrompt = `活動類型：${input.eventType}
-${input.duration ? `活動期間：${input.duration}` : ""}
-${input.budget ? `預算範圍：${input.budget}` : ""}
-${input.targetAudience ? `目標客群：${input.targetAudience}` : ""}
-${input.specialRequirements ? `特殊需求：${input.specialRequirements}` : ""}
+      const userPrompt = `æ´»åé¡åï¼${input.eventType}
+${input.duration ? `æ´»åæéï¼${input.duration}` : ""}
+${input.budget ? `é ç®ç¯åï¼${input.budget}` : ""}
+${input.targetAudience ? `ç®æ¨å®¢ç¾¤ï¼${input.targetAudience}` : ""}
+${input.specialRequirements ? `ç¹æ®éæ±ï¼${input.specialRequirements}` : ""}
 
-請給我一份完整的活動企劃。`;
+è«çµ¦æä¸ä»½å®æ´çæ´»åä¼åã`;
 
       const content = await geminiGenerateText(ctx.env.GEMINI_API_KEY, {
         systemPrompt,
@@ -379,6 +379,7 @@ const posterRouter = router({
         effects: z.array(z.string()).default([]),
         personStyle: z.enum(["elegant", "sweet", "fashionable", "graceful", "cool"]).optional(),
         scene: z.enum(["vip_room", "dance_floor", "bar_counter", "red_carpet"]).optional(),
+        excludeText: z.boolean().default(false),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -396,11 +397,11 @@ const posterRouter = router({
       };
 
       const personStyleMap: Record<string, string> = {
-        elegant: "elegant and sophisticated hostess in a luxurious evening gown, graceful posture, mature and refined appearance",
-        sweet: "charming and approachable hostess in a chic cocktail dress, warm smile, youthful and pleasant appearance",
-        fashionable: "trendy and stylish hostess in a contemporary designer outfit, confident pose, modern and chic appearance",
-        graceful: "graceful and poised hostess in a classic evening dress, gentle demeanor, cultured and refined appearance",
-        cool: "mysterious and alluring hostess in a sleek evening outfit, captivating gaze, cool and sophisticated appearance",
+        elegant: "elegant and sophisticated hostess in a luxurious evening gown, graceful posture, mature and refined appearance, genuine warm smile with sparkling eyes, natural relaxed joyful expression, candid moment of laughter",
+        sweet: "charming and approachable hostess in a chic cocktail dress, bright radiant smile showing natural happiness, youthful and pleasant appearance, eyes lit up with genuine delight, relaxed and comfortable expression",
+        fashionable: "trendy and stylish hostess in a contemporary designer outfit, confident pose with a natural beaming smile, modern and chic appearance, authentic joyful expression, eyes crinkled with genuine happiness",
+        graceful: "graceful and poised hostess in a classic evening dress, gentle warm smile radiating natural charm, cultured and refined appearance, soft genuine expression of contentment, relaxed and inviting demeanor",
+        cool: "mysterious and alluring hostess in a sleek evening outfit, captivating gaze with a subtle confident smile, cool and sophisticated appearance, naturally relaxed expression, effortlessly charming demeanor",
       };
 
       const sceneMap: Record<string, string> = {
@@ -410,7 +411,7 @@ const posterRouter = router({
         red_carpet: "glamorous red carpet event setting with spotlights, velvet ropes, and VIP atmosphere",
       };
 
-      const personDesc = input.personStyle ? personStyleMap[input.personStyle] : "elegant and glamorous hostess in a sophisticated evening gown, professional and alluring appearance";
+      const personDesc = input.personStyle ? personStyleMap[input.personStyle] : "elegant and glamorous hostess in a sophisticated evening gown, professional and alluring appearance, genuine warm radiant smile, natural relaxed joyful expression, eyes sparkling with authentic happiness";
       const sceneDesc = input.scene ? sceneMap[input.scene] : "upscale nightclub venue with premium lighting and luxurious interior";
 
       const featureKeywords = input.features.length > 0
@@ -422,6 +423,11 @@ const posterRouter = router({
         : "";
 
       const qualityTerms = "High quality commercial photography, professional studio lighting, magazine editorial style, sharp focus, vibrant colors, premium production value.";
+      const personPhotographyTerms = "Photograph the person with natural, candid expression. Capture a genuine, relaxed moment - not a posed studio shot. The smile should look real and warm, with natural eye crinkle (Duchenne smile). Avoid stiff, robotic, or overly perfect expressions.";
+
+      const typographyLine = input.excludeText
+        ? "Design: clean background-focused composition, NO text, NO typography, NO words, NO letters on the image. Leave space for text overlay."
+        : "Design: elegant bilingual (Chinese and English) typography, hotel name prominently featured, professional layout with decorative elements.";
 
       let imagePrompt = "";
 
@@ -432,7 +438,7 @@ Setting: ${sceneDesc}.
 Style: ${styleDescriptions[input.style]}.
 ${featureKeywords}
 ${effectKeywords}
-Design: elegant bilingual (Chinese and English) typography, hotel name prominently featured, professional layout with decorative elements.
+${typographyLine}
 ${input.customPrompt ? `Additional details: ${input.customPrompt}.` : ""}
 ${qualityTerms}
 Vertical portrait format, 9:16 aspect ratio.`;
@@ -444,7 +450,8 @@ Setting: ${sceneDesc}.
 Style: ${styleDescriptions[input.style]}.
 ${featureKeywords}
 ${effectKeywords}
-Design: elegant bilingual (Chinese and English) typography, hotel name prominently featured, professional layout with decorative elements.
+${typographyLine}
+${personPhotographyTerms}
 ${input.customPrompt ? `Additional details: ${input.customPrompt}.` : ""}
 ${qualityTerms}
 Vertical portrait format, 9:16 aspect ratio.`;
@@ -453,10 +460,77 @@ Vertical portrait format, 9:16 aspect ratio.`;
       const imageDataUrl = await geminiGenerateImage(ctx.env.GEMINI_API_KEY, imagePrompt);
 
       if (!imageDataUrl) {
-        throw new Error("圖片生成失敗。Imagen 4 需要 Google AI 付費方案，請到 https://ai.dev/projects 升級後再試。");
+        throw new Error("åççæå¤±æãImagen 4 éè¦ Google AI ä»è²»æ¹æ¡ï¼è«å° https://ai.dev/projects åç´å¾åè©¦ã");
       }
 
       return { imageBase64: imageDataUrl };
+    }),
+
+  suggestCopy: publicProcedure
+    .input(
+      z.object({
+        hotel: z.enum(["chinatown", "dihao", "both"]).default("chinatown"),
+        style: z.enum(["neon_electronic", "luxury_gold", "festival_red", "modern_minimal"]),
+        theme: z.string(),
+        features: z.array(z.string()).default([]),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const hotelLabels: Record<string, string> = {
+        chinatown: "中國城經典酒店",
+        dihao: "帝豪酒店",
+        both: "中國城經典酒店 × 帝豪酒店",
+      };
+
+      const styleLabels: Record<string, string> = {
+        neon_electronic: "霓虹電子風",
+        luxury_gold: "奢華金色風",
+        festival_red: "節慶紅金風",
+        modern_minimal: "現代極簡風",
+      };
+
+      const systemPrompt = `你是一個在台灣八大行業酒店業工作多年的資深行銷，擅長寫吸睛的海報文案。
+你要根據活動主題和風格，生成適合放在海報上的文字。
+
+規則：
+1. 標題要簡短有力，最多15個字，要有衝擊力
+2. 副標題補充說明，最多20個字
+3. 資訊行放日期/地點等細節，最多30個字
+4. CTA按鈕文字要有行動力，最多10個字
+5. 語氣要符合酒店業：有點性感、有點神秘、讓人想來
+6. 文字要適合放在海報上，不是寫文章
+
+請用 JSON 格式回覆，格式如下：
+{"title": "主標題", "subtitle": "副標題", "info": "資訊行", "cta": "CTA按鈕"}
+只回覆 JSON，不要有其他文字。`;
+
+      const userPrompt = `酒店：${hotelLabels[input.hotel]}
+風格：${styleLabels[input.style]}
+活動主題：${input.theme}
+${input.features.length > 0 ? `內容特色：${input.features.join("、")}` : ""}`;
+
+      const content = await geminiGenerateText(ctx.env.GEMINI_API_KEY, {
+        systemPrompt,
+        userPrompt,
+      });
+
+      try {
+        const cleanJson = content.replace(/```json?\s*/g, "").replace(/```\s*/g, "").trim();
+        const parsed = JSON.parse(cleanJson) as { title: string; subtitle: string; info: string; cta: string };
+        return {
+          title: (parsed.title || "").slice(0, 15),
+          subtitle: (parsed.subtitle || "").slice(0, 20),
+          info: (parsed.info || "").slice(0, 30),
+          cta: (parsed.cta || "").slice(0, 10),
+        };
+      } catch {
+        return {
+          title: "今夜不醉不歸",
+          subtitle: "最頂級的夜生活體驗",
+          info: "每晚 9:00 PM 起",
+          cta: "立即預約",
+        };
+      }
     }),
 
   uploadPhoto: publicProcedure
@@ -482,9 +556,9 @@ const suggestionsRouter = router({
   create: publicProcedure
     .input(
       z.object({
-        nickname: z.string().min(1, "請輸入暱稱").max(100),
+        nickname: z.string().min(1, "è«è¼¸å¥æ±ç¨±").max(100),
         category: z.enum(["feature", "bug", "design", "content", "other"]).default("other"),
-        content: z.string().min(1, "請輸入建議內容").max(2000),
+        content: z.string().min(1, "è«è¼¸å¥å»ºè­°å§å®¹").max(2000),
       })
     )
     .mutation(async ({ input }) => {
