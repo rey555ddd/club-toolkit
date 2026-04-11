@@ -6,6 +6,7 @@ import { Streamdown } from "streamdown";
 
 type CopyType = "recruitment" | "social" | "event" | "lady_recruitment" | "call_client";
 type Hotel = "chinatown" | "dihao" | "both";
+type Platform = "ig_post" | "ig_story" | "fb_post" | "line_msg" | "sms";
 
 const copyTypes = [
   {
@@ -66,6 +67,14 @@ const hotelOptions = [
   { id: "both" as Hotel, label: "兩間都要" },
 ];
 
+const platformOptions = [
+  { id: "ig_post" as Platform, label: "IG 貼文", desc: "80-150 字" },
+  { id: "ig_story" as Platform, label: "IG 限動", desc: "30-60 字" },
+  { id: "fb_post" as Platform, label: "FB 貼文", desc: "120-200 字" },
+  { id: "line_msg" as Platform, label: "LINE 訊息", desc: "50-100 字" },
+  { id: "sms" as Platform, label: "簡訊", desc: "30-50 字" },
+];
+
 function GoldButton({
   onClick,
   disabled,
@@ -111,6 +120,7 @@ function GoldButton({
 export default function Copywriter() {
   const [selectedType, setSelectedType] = useState<CopyType | null>(null);
   const [selectedHotel, setSelectedHotel] = useState<Hotel>("both");
+  const [selectedPlatform, setSelectedPlatform] = useState<Platform>("ig_post");
   const [selectedElements, setSelectedElements] = useState<string[]>([]);
   const [customNote, setCustomNote] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -143,6 +153,7 @@ export default function Copywriter() {
     generateMutation.mutate({
       type: selectedType,
       hotel: selectedHotel,
+      platform: selectedPlatform,
       elements: selectedElements,
       customNote: customNote || undefined,
     });
@@ -257,6 +268,54 @@ export default function Copywriter() {
                     }}
                   >
                     {h.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 發布平台 */}
+            <div
+              className="p-5 rounded-xl"
+              style={{
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(201,168,76,0.15)",
+              }}
+            >
+              <h2
+                className="text-sm font-semibold mb-3 tracking-wide"
+                style={{ color: "rgba(255,255,255,0.7)" }}
+              >
+                發布平台
+              </h2>
+              <div className="flex gap-2 flex-wrap">
+                {platformOptions.map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => setSelectedPlatform(p.id)}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                    style={{
+                      background:
+                        selectedPlatform === p.id
+                          ? "rgba(201,168,76,0.15)"
+                          : "rgba(255,255,255,0.04)",
+                      border: `1px solid ${
+                        selectedPlatform === p.id
+                          ? "rgba(201,168,76,0.4)"
+                          : "rgba(255,255,255,0.08)"
+                      }`,
+                      color:
+                        selectedPlatform === p.id
+                          ? "#f0c040"
+                          : "rgba(255,255,255,0.55)",
+                    }}
+                  >
+                    {p.label}
+                    <span
+                      className="ml-1 opacity-50"
+                      style={{ fontSize: "10px" }}
+                    >
+                      {p.desc}
+                    </span>
                   </button>
                 ))}
               </div>
