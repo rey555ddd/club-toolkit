@@ -210,7 +210,7 @@ export default function Poster() {
 
   const uploadMutation = trpc.poster.uploadPhoto.useMutation({
     onSuccess: (data) => {
-      setUploadedPhotoUrl(data.url);
+      setUploadedPhotoUrl(data.base64 ? `data:${data.mimeType};base64,${data.base64}` : null);
       toast.success("照片上傳成功");
     },
     onError: (err) => {
@@ -220,7 +220,7 @@ export default function Poster() {
 
   const generateMutation = trpc.poster.generate.useMutation({
     onSuccess: (data) => {
-      setGeneratedImageUrl(data.imageUrl ?? null);
+      setGeneratedImageUrl(data.imageBase64 ?? null);
       setGenerationCount((c) => c + 1);
     },
     onError: (err) => {
