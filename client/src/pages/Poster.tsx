@@ -535,10 +535,8 @@ export default function Poster() {
       return;
     }
 
-    const hotel = hotelOptions.find((h) => h.id === selectedHotel)?.label ?? "酒店";
     suggestCopyMutation.mutate({
       hotel: selectedHotel,
-      hotel,
       theme,
       features: selectedFeatures,
       style: selectedStyle,
