@@ -43,7 +43,7 @@ export default function Home() {
     <div className="min-h-screen" style={{ background: "oklch(0.08 0.01 260)" }}>
       {/* Hero Section */}
       <section
-        className="relative pt-32 pb-20 overflow-hidden"
+        className="relative pt-24 pb-12 overflow-hidden"
         style={{
           background: "linear-gradient(180deg, oklch(0.06 0.015 260) 0%, oklch(0.08 0.01 260) 100%)",
         }}
@@ -70,7 +70,7 @@ export default function Home() {
 
         <div className="container mx-auto px-4 lg:px-8 relative">
           {/* 雙 Logo 展示 */}
-          <div className="flex flex-col items-center gap-8 mb-12">
+          <div className="flex flex-col items-center gap-6 mb-8">
             <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-12">
               <div className="flex flex-col items-center gap-3 group">
                 <div
@@ -82,7 +82,7 @@ export default function Home() {
                   <img
                     src={CHINATOWN_LOGO}
                     alt="中國城經典酒店"
-                    className="h-24 sm:h-28 w-auto object-contain"
+                    className="h-20 sm:h-24 w-auto object-contain"
                     style={{
                       filter: "drop-shadow(0 0 12px rgba(201,168,76,0.4))",
                     }}
@@ -117,7 +117,7 @@ export default function Home() {
                   <img
                     src={DIHAO_LOGO}
                     alt="帝豪酒店"
-                    className="h-24 sm:h-28 w-auto object-contain"
+                    className="h-20 sm:h-24 w-auto object-contain"
                     style={{
                       filter: "drop-shadow(0 0 12px rgba(201,168,76,0.4))",
                     }}
@@ -138,7 +138,7 @@ export default function Home() {
           </div>
 
           {/* 主標題 */}
-          <div className="text-center mb-10">
+          <div className="text-center mb-8">
             <h1
               className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 leading-tight"
               style={{
@@ -161,7 +161,7 @@ export default function Home() {
           </div>
 
           {/* 亮點標籤 */}
-          <div className="flex flex-wrap justify-center gap-3 mb-14">
+          <div className="flex flex-wrap justify-center gap-3 mb-10">
             {highlights.map((h, i) => (
               <div
                 key={i}
@@ -252,7 +252,7 @@ export default function Home() {
       <section className="py-16" style={{ background: "oklch(0.10 0.012 260)" }}>
         <div className="container mx-auto px-4 lg:px-8">
           <div
-            className="w-24 h-px mx-auto mb-10"
+            className="w-24 h-px mx-auto mb-8"
             style={{ background: "linear-gradient(90deg, transparent, rgba(201,168,76,0.6), transparent)" }}
           />
           <div className="max-w-3xl mx-auto text-center">

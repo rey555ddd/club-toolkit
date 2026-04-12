@@ -24,7 +24,8 @@ export default function Navbar() {
         background: "rgba(8, 8, 20, 0.92)",
         backdropFilter: "blur(20px)",
         borderBottom: "1px solid rgba(201, 168, 76, 0.25)",
-        boxShadow: "0 4px 30px rgba(0,0,0,0.5), 0 1px 0 rgba(201,168,76,0.15)",
+        boxShadow:
+          "0 4px 30px rgba(0,0,0,0.5), 0 1px 0 rgba(201,168,76,0.15)",
       }}
     >
       <div className="container mx-auto px-4 lg:px-8">
@@ -67,8 +68,12 @@ export default function Navbar() {
                   href={item.path}
                   className="relative px-4 py-2 text-sm font-medium tracking-wide transition-all duration-300 rounded-sm"
                   style={{
-                    color: isActive ? "#f0c040" : "rgba(255,255,255,0.7)",
-                    textShadow: isActive ? "0 0 12px rgba(240,192,64,0.8)" : "none",
+                    color: isActive
+                      ? "#f0c040"
+                      : "rgba(255,255,255,0.7)",
+                    textShadow: isActive
+                      ? "0 0 12px rgba(240,192,64,0.8)"
+                      : "none",
                   }}
                 >
                   {isActive && (
@@ -84,7 +89,10 @@ export default function Navbar() {
                   {isActive && (
                     <span
                       className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5"
-                      style={{ background: "linear-gradient(90deg, transparent, #f0c040, transparent)" }}
+                      style={{
+                        background:
+                          "linear-gradient(90deg, transparent, #f0c040, transparent)",
+                      }}
                     />
                   )}
                 </Link>
@@ -92,10 +100,11 @@ export default function Navbar() {
             })}
           </div>
 
-          {/* 右側標籤 */}
+          {/* 右側標籤 — 修復：改為可點擊的 Link */}
           <div className="hidden md:flex items-center gap-2">
-            <div
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium"
+            <Link
+              href="/"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 hover:scale-105"
               style={{
                 background: "rgba(201,168,76,0.1)",
                 border: "1px solid rgba(201,168,76,0.3)",
@@ -104,7 +113,7 @@ export default function Navbar() {
             >
               <Sparkles size={12} />
               <span>AI 行銷工具</span>
-            </div>
+            </Link>
           </div>
 
           {/* 手機版漢堡選單 */}
@@ -136,9 +145,15 @@ export default function Navbar() {
                   href={item.path}
                   className="px-4 py-3 text-sm font-medium rounded-sm transition-all"
                   style={{
-                    color: isActive ? "#f0c040" : "rgba(255,255,255,0.75)",
-                    background: isActive ? "rgba(201,168,76,0.08)" : "transparent",
-                    borderLeft: isActive ? "2px solid #f0c040" : "2px solid transparent",
+                    color: isActive
+                      ? "#f0c040"
+                      : "rgba(255,255,255,0.75)",
+                    background: isActive
+                      ? "rgba(201,168,76,0.08)"
+                      : "transparent",
+                    borderLeft: isActive
+                      ? "2px solid #f0c040"
+                      : "2px solid transparent",
                   }}
                   onClick={() => setMobileOpen(false)}
                 >
