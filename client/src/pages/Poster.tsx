@@ -18,6 +18,19 @@ import {
 type Hotel = "chinatown" | "dihao" | "both";
 type PosterStyle = "neon_electronic" | "luxury_gold" | "festival_red" | "modern_minimal";
 type PersonStyle = "elegant" | "sweet" | "fashionable" | "graceful" | "cool" | "sexy";
+type OutfitStyle =
+  | "silver_sequin"
+  | "gold_gown"
+  | "sweet_cutie"
+  | "black_slip"
+  | "red_tight"
+  | "lace_sheer"
+  | "pastel_princess"
+  | "crystal_mini"
+  | "velvet_bodycon"
+  | "bikini_cover"
+  | "cheongsam"
+  | "white_angel";
 type SceneType = "vip_room" | "dance_floor" | "bar_counter" | "red_carpet" | "stage_show" | "lounge_sofa" | "champagne_tower" | "edm_party" | "birthday_vip" | "starlight_corridor";
 type TitleEffect = "gold_blaze" | "festive_red" | "neon_electric" | "elegant_calligraphy";
 
@@ -72,6 +85,21 @@ const personStyleOptions: { id: PersonStyle; label: string; desc: string }[] = [
   { id: "graceful", label: "氣質", desc: "溫婉大方、書卷氣息" },
   { id: "cool", label: "冷豔", desc: "神秘高冷、攝人心魄" },
   { id: "sexy", label: "性感", desc: "撩人曲線、火辣誘惑" },
+];
+
+const outfitStyleOptions: { id: OutfitStyle; label: string; desc: string }[] = [
+  { id: "silver_sequin", label: "銀色亮片", desc: "水鑽閃光舞台感" },
+  { id: "gold_gown", label: "金色禮服", desc: "尊榮金色長禮服" },
+  { id: "sweet_cutie", label: "甜心小可愛", desc: "俏皮短洋裝" },
+  { id: "black_slip", label: "黑色吊帶禮服", desc: "經典低胸細肩帶" },
+  { id: "red_tight", label: "火辣紅色緊身", desc: "誘惑紅色 bodycon" },
+  { id: "lace_sheer", label: "蕾絲透視", desc: "精緻蕾絲透膚" },
+  { id: "pastel_princess", label: "粉色公主風", desc: "夢幻粉紫紗裙" },
+  { id: "crystal_mini", label: "水鑽迷你裙", desc: "閃耀鑽飾短裙" },
+  { id: "velvet_bodycon", label: "絲絨深 V", desc: "奢華絲絨低胸" },
+  { id: "bikini_cover", label: "比基尼罩衫", desc: "泳池派對風" },
+  { id: "cheongsam", label: "旗袍改良", desc: "東方韻味開衩" },
+  { id: "white_angel", label: "白色天使", desc: "純白夢幻仙氣" },
 ];
 
 const sceneOptions: { id: SceneType; label: string; desc: string }[] = [
@@ -559,6 +587,7 @@ export default function Poster() {
   const [selectedHotel, setSelectedHotel] = useState<Hotel>("chinatown");
   const [selectedStyle, setSelectedStyle] = useState<PosterStyle>("neon_electronic");
   const [selectedPersonStyle, setSelectedPersonStyle] = useState<PersonStyle | "">("");
+  const [selectedOutfitStyle, setSelectedOutfitStyle] = useState<OutfitStyle | "">("");
   const [selectedScene, setSelectedScene] = useState<SceneType | "">("");
   const [selectedTitleEffect, setSelectedTitleEffect] = useState<TitleEffect | "">("");
   const [selectedTheme, setSelectedTheme] = useState("");
@@ -705,6 +734,7 @@ export default function Poster() {
       customPrompt: merged || undefined,
       effects: selectedEffects,
       personStyle: selectedPersonStyle || undefined,
+      outfitStyle: selectedOutfitStyle || undefined,
       scene: selectedScene || undefined,
       excludeText: true,
     });
@@ -1195,6 +1225,17 @@ export default function Poster() {
                         </button>
                       ))}
                     </div>
+                  </div>
+                  <div>
+                    <p className="text-xs mb-2" style={{ color: "rgba(255,255,255,0.45)" }}>
+                      服飾風格
+                    </p>
+                    <SelectDropdown
+                      value={selectedOutfitStyle}
+                      onChange={(v) => setSelectedOutfitStyle(v)}
+                      options={outfitStyleOptions}
+                      placeholder="選擇服飾風格（選填）"
+                    />
                   </div>
                 </div>
               )}

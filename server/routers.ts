@@ -161,6 +161,7 @@ const posterRouter = router({
         customPrompt: z.string().optional(),
         effects: z.array(z.string()).default([]),
         personStyle: z.enum(["elegant", "sweet", "fashionable", "graceful", "cool", "sexy"]).optional(),
+        outfitStyle: z.enum(["silver_sequin", "gold_gown", "sweet_cutie", "black_slip", "red_tight", "lace_sheer", "pastel_princess", "crystal_mini", "velvet_bodycon", "bikini_cover", "cheongsam", "white_angel"]).optional(),
         scene: z.enum(["vip_room", "dance_floor", "bar_counter", "red_carpet", "stage_show", "lounge_sofa", "champagne_tower", "edm_party", "birthday_vip", "starlight_corridor"]).optional(),
       })
     )
@@ -202,7 +203,23 @@ const posterRouter = router({
         starlight_corridor: "glamorous starlight entrance corridor with illuminated walkway, twinkling bokeh lights, mirrored walls, and red-carpet arrival mood",
       };
 
+      const outfitMap: Record<string, string> = {
+        silver_sequin: "wearing a shimmering silver sequin gown",
+        gold_gown: "wearing an elegant gold-toned evening gown",
+        sweet_cutie: "wearing a sweet cute short dress (甜心小可愛 style, playful mini dress)",
+        black_slip: "wearing a classic black slip evening dress, low-cut spaghetti strap",
+        red_tight: "wearing a fiery red figure-hugging bodycon dress",
+        lace_sheer: "wearing a delicate lace sheer dress",
+        pastel_princess: "wearing a pastel princess-style tulle gown",
+        crystal_mini: "wearing a crystal-embellished mini skirt outfit",
+        velvet_bodycon: "wearing a luxurious velvet deep-V bodycon dress",
+        bikini_cover: "wearing a stylish bikini with sheer cover-up",
+        cheongsam: "wearing a modernized cheongsam with high slit",
+        white_angel: "wearing a pure white ethereal angel-style gown",
+      };
+      const outfitDesc = input.outfitStyle ? outfitMap[input.outfitStyle] : "";
       const personDesc = input.personStyle ? personStyleMap[input.personStyle] : "a Taiwanese female hostess, East Asian (Han Chinese / Taiwanese) ethnicity, 網美 (Taiwanese influencer) aesthetic, long black or dark brown hair, fair to light olive skin, almond-shaped eyes, defined lashes, glossy lips, wearing a sophisticated evening gown, Taiwan nightlife hostess look";
+      const personDescFinal = outfitDesc ? `${personDesc}, specifically ${outfitDesc}` : personDesc;
 
       const ethnicLock = "STRICT REQUIREMENT — the person MUST be a Taiwanese woman of East Asian (Han Chinese / Taiwanese) ethnicity, AGE 21 to 25 years old (young adult, fresh youthful appearance, NOT middle-aged), FAIR to LIGHT skin (porcelain or light ivory tone, bright and luminous, NOT tanned, NOT dark, NOT olive-dark), resembling real young Taiwanese female influencers and 網美. DO NOT generate Western, European, Caucasian, South Asian, African, Japanese, Korean, or mixed-heritage appearances. DO NOT generate anyone older than 25 or with darker/tanned skin. Makeup and styling must follow current Taiwan nightlife fashion trends (網美 / 辣妹 aesthetic). This is a non-negotiable requirement.";
 
@@ -248,7 +265,7 @@ ${referencePosterClause}
 
 Professional nightclub marketing poster for ${hotelNames[input.hotel]}, a premium luxury entertainment venue in Taiwan.
 Event theme: ${input.theme}.
-Featuring: ${personDesc}.
+Featuring: ${personDescFinal}.
 Setting: ${sceneDesc}.
 Style: ${styleDescriptions[input.style]}.
 ${featureKeywords}
@@ -267,7 +284,7 @@ ${referencePosterClause}
 
 Professional nightclub marketing poster for ${hotelNames[input.hotel]}, a premium luxury entertainment venue in Taiwan.
 Event theme: ${input.theme}.
-Featuring: ${personDesc}.
+Featuring: ${personDescFinal}.
 Setting: ${sceneDesc}.
 Style: ${styleDescriptions[input.style]}.
 ${featureKeywords}
