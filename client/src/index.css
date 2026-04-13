@@ -99,7 +99,9 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+    font-family: 'Inter', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+    font-feature-settings: "cv11", "ss01", "ss03";
+    -webkit-font-smoothing: antialiased;
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
@@ -111,6 +113,63 @@
   input[type="checkbox"]:not(:disabled),
   input[type="radio"]:not(:disabled) {
     @apply cursor-pointer;
+  }
+}
+
+/* 品牌字型工具類 */
+@layer utilities {
+  .font-display {
+    font-family: 'Noto Serif TC', 'Playfair Display', 'PingFang TC', serif;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+  }
+  .font-brand-en {
+    font-family: 'Cinzel', 'Playfair Display', serif;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+  }
+  .font-serif-tc {
+    font-family: 'Noto Serif TC', 'PingFang TC', serif;
+  }
+  .font-num {
+    font-family: 'Inter', 'Noto Sans TC', sans-serif;
+    font-feature-settings: "tnum";
+  }
+  .text-gold-metal {
+    background: linear-gradient(135deg, #c9a84c 0%, #f0c040 35%, #fff8e1 50%, #f0c040 65%, #8e6b1f 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 0 30px rgba(240,192,64,0.15);
+  }
+  .text-gold-metal-soft {
+    background: linear-gradient(135deg, #c9a84c 0%, #f0c040 50%, #c9a84c 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .glass-card {
+    background: rgba(255,255,255,0.035);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    border: 1px solid rgba(201,168,76,0.18);
+  }
+  .gold-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(201,168,76,0.55), transparent);
+  }
+  .hover-lift {
+    transition: transform 400ms cubic-bezier(.22,1,.36,1), box-shadow 400ms ease;
+  }
+  .hover-lift:hover {
+    transform: translateY(-4px);
+  }
+  .animate-fade-up {
+    animation: fadeUp 700ms cubic-bezier(.22,1,.36,1) both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 }
 

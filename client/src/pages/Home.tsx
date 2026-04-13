@@ -89,8 +89,9 @@ export default function Home() {
                   />
                 </div>
                 <div className="text-center">
-                  <p className="text-sm font-medium" style={{ color: "#f0c040" }}>中國城經典酒店</p>
-                  <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.4)" }}>桃園區復興路99號 8F｜03-339-2188</p>
+                  <p className="font-brand-en text-[10px]" style={{ color: "rgba(240,192,64,0.75)" }}>China Town Club</p>
+                  <p className="font-display text-[15px] text-gold-metal mt-0.5">中國城經典酒店</p>
+                  <p className="text-[11px] font-num mt-1 tracking-wider" style={{ color: "rgba(255,255,255,0.4)" }}>桃園區復興路99號 8F ｜ 03-339-2188</p>
                 </div>
               </div>
 
@@ -124,8 +125,9 @@ export default function Home() {
                   />
                 </div>
                 <div className="text-center">
-                  <p className="text-sm font-medium" style={{ color: "#f0c040" }}>帝豪酒店</p>
-                  <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.4)" }}>桃園區復興路99號 6F｜03-339-3666</p>
+                  <p className="font-brand-en text-[10px]" style={{ color: "rgba(240,192,64,0.75)" }}>Empire Royal Club</p>
+                  <p className="font-display text-[15px] text-gold-metal mt-0.5">帝豪酒店</p>
+                  <p className="text-[11px] font-num mt-1 tracking-wider" style={{ color: "rgba(255,255,255,0.4)" }}>桃園區復興路99號 6F ｜ 03-339-3666</p>
                 </div>
               </div>
             </div>
@@ -138,21 +140,17 @@ export default function Home() {
           </div>
 
           {/* 主標題 */}
-          <div className="text-center mb-8">
-            <h1
-              className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 leading-tight"
-              style={{
-                background: "linear-gradient(135deg, #c9a84c 0%, #f0c040 40%, #fff8e1 60%, #f0c040 80%, #c9a84c 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
-            >
+          <div className="text-center mb-10 animate-fade-up">
+            <p className="font-brand-en text-[11px] sm:text-xs mb-3" style={{ color: "rgba(240,192,64,0.7)" }}>
+              AI Marketing Suite · For Premium Nightlife
+            </p>
+            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl text-gold-metal mb-5 leading-[1.15]">
               AI 行銷工具平台
             </h1>
+            <div className="gold-divider max-w-[72px] mx-auto mb-5" />
             <p
-              className="text-base sm:text-lg max-w-xl mx-auto leading-relaxed"
-              style={{ color: "rgba(255,255,255,0.6)" }}
+              className="text-[15px] sm:text-base max-w-xl mx-auto leading-loose font-light tracking-wide"
+              style={{ color: "rgba(255,255,255,0.62)" }}
             >
               專為八大行業酒店設計的智能行銷助手
               <br className="hidden sm:block" />
@@ -222,14 +220,14 @@ export default function Home() {
                   </div>
 
                   <h3
-                    className="text-lg font-semibold mb-2"
+                    className="font-serif-tc text-[17px] font-bold mb-2 tracking-wide"
                     style={{ color: "#f5f0e8" }}
                   >
                     {f.title}
                   </h3>
                   <p
-                    className="text-sm leading-relaxed mb-5"
-                    style={{ color: "rgba(255,255,255,0.5)" }}
+                    className="text-[13px] leading-loose mb-5 font-light"
+                    style={{ color: "rgba(255,255,255,0.55)" }}
                   >
                     {f.desc}
                   </p>
@@ -256,15 +254,15 @@ export default function Home() {
             style={{ background: "linear-gradient(90deg, transparent, rgba(201,168,76,0.6), transparent)" }}
           />
           <div className="max-w-3xl mx-auto text-center">
-            <h2
-              className="text-xl sm:text-2xl font-semibold mb-5"
-              style={{ color: "#f0c040" }}
-            >
+            <p className="font-brand-en text-[10px] mb-3" style={{ color: "rgba(240,192,64,0.65)" }}>
+              About
+            </p>
+            <h2 className="font-display text-2xl sm:text-3xl text-gold-metal mb-6">
               蹦闆旗下酒店事業
             </h2>
             <p
-              className="text-sm sm:text-base leading-loose"
-              style={{ color: "rgba(255,255,255,0.55)" }}
+              className="text-[14px] sm:text-[15px] leading-loose font-light tracking-wide"
+              style={{ color: "rgba(255,255,255,0.58)" }}
             >
               中國城經典酒店與帝豪酒店同屬桃園在地知名酒店集團，深耕八大行業多年。
               本平台整合 AI 技術，協助店內行銷人員快速產出高品質的文案、海報與活動企劃，
@@ -281,9 +279,11 @@ export default function Home() {
       {/* 視覺參考 Section */}
       <section className="py-16">
         <div className="container mx-auto px-4 lg:px-8">
+          <p className="text-center font-brand-en text-[10px] mb-2" style={{ color: "rgba(240,192,64,0.6)" }}>
+            Campaign Showcase
+          </p>
           <h2
-            className="text-center text-lg font-medium mb-8 tracking-widest"
-            style={{ color: "rgba(201,168,76,0.7)" }}
+            className="text-center font-display text-xl sm:text-2xl mb-8 text-gold-metal-soft"
           >
             活動宣傳範例
           </h2>

@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Menu, X, Sparkles } from "lucide-react";
 
 const CHINATOWN_LOGO = "/logos/chinatown-transparent.png";
-const DIHAO_LOGO = "/logos/empire-transparent.png";
+const DIHAO_LOGO = "/logos/empire-new.jpeg";
 
 const navItems = [
   { label: "首頁", path: "/" },
@@ -16,6 +16,12 @@ const navItems = [
 export default function Navbar() {
   const [location] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // 路由變更時自動捲動到頁面最上方
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+    setMobileOpen(false);
+  }, [location]);
 
   return (
     <nav
@@ -32,29 +38,24 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo 區域 */}
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <img
                 src={CHINATOWN_LOGO}
                 alt="中國城經典酒店"
-                className="h-8 w-auto object-contain"
-                style={{
-                  filter: "drop-shadow(0 0 6px rgba(201,168,76,0.5))",
-                }}
+                className="h-9 w-auto object-contain transition-transform duration-500 group-hover:scale-105"
+                style={{ filter: "drop-shadow(0 0 8px rgba(201,168,76,0.55))" }}
               />
-              <span
-                className="text-xs font-light tracking-widest"
-                style={{ color: "rgba(201,168,76,0.5)" }}
-              >
-                ×
-              </span>
+              <span className="text-sm font-light tracking-widest text-gold-metal-soft hidden sm:inline">×</span>
               <img
                 src={DIHAO_LOGO}
                 alt="帝豪酒店"
-                className="h-8 w-auto object-contain"
-                style={{
-                  filter: "drop-shadow(0 0 6px rgba(201,168,76,0.5))",
-                }}
+                className="h-9 w-auto object-contain rounded transition-transform duration-500 group-hover:scale-105 hidden sm:inline"
+                style={{ filter: "drop-shadow(0 0 8px rgba(201,168,76,0.55))" }}
               />
+              <div className="ml-2 hidden lg:flex flex-col leading-tight">
+                <span className="text-[10px] font-brand-en text-gold-metal-soft">Empire × China Town Club</span>
+                <span className="font-display text-[13px] text-gold-metal">蹦闆旗下酒店事業</span>
+              </div>
             </div>
           </Link>
 
@@ -66,14 +67,11 @@ export default function Navbar() {
                 <Link
                   key={item.path}
                   href={item.path}
-                  className="relative px-4 py-2 text-sm font-medium tracking-wide transition-all duration-300 rounded-sm"
+                  className="relative px-4 py-2 text-[13px] font-serif-tc tracking-[0.1em] transition-all duration-300 rounded-sm"
                   style={{
-                    color: isActive
-                      ? "#f0c040"
-                      : "rgba(255,255,255,0.7)",
-                    textShadow: isActive
-                      ? "0 0 12px rgba(240,192,64,0.8)"
-                      : "none",
+                    color: isActive ? "#f0c040" : "rgba(255,255,255,0.72)",
+                    fontWeight: isActive ? 700 : 500,
+                    textShadow: isActive ? "0 0 14px rgba(240,192,64,0.7)" : "none",
                   }}
                 >
                   {isActive && (
