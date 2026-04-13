@@ -1078,6 +1078,8 @@ const posterRouter = router({
         features: z.array(z.string()).default([]),
         hasUploadedPhoto: z.boolean().default(false),
         uploadedPhotoUrl: z.string().optional(),
+        referencePosterUrl: z.string().optional(),
+        personCount: z.number().min(1).max(6).default(1),
         customPrompt: z.string().optional(),
         effects: z.array(z.string()).default([]),
         personStyle: z.enum(["elegant", "sweet", "fashionable", "graceful", "cool", "sexy"]).optional(),
@@ -1128,6 +1130,14 @@ const posterRouter = router({
       const referenceVariationClause = (input.hasUploadedPhoto && input.uploadedPhotoUrl)
         ? "IMPORTANT — use the uploaded reference photo only as STYLE / VIBE / POSE inspiration. Generate a DIFFERENT Taiwanese woman who looks similar to the reference but is clearly a different individual (different face, slightly different hairstyle, similar overall mood and aesthetic). Do NOT copy the reference face exactly. The new person still must follow all ethnic and age rules above."
         : "";
+
+      const personCountClause = input.personCount > 1
+        ? `CRITICAL GROUP COUNT — Generate EXACTLY ${input.personCount} Taiwanese women standing together in the same frame (group shot, ensemble poster style). All ${input.personCount} women must follow the ethnicity/age/skin rules above. Vary their outfits (different colors and styles of evening dresses), slightly vary their hairstyles (long straight, long wavy, medium wavy), but keep all within the chosen personal style aesthetic. Arrange them in a visually balanced composition typical of Taiwanese nightclub marketing posters — e.g. standing in a row, slightly offset in depth, or grouped in a V-formation. DO NOT generate a different number of people. Exactly ${input.personCount}.`
+        : "";
+
+      const referencePosterClause = input.referencePosterUrl
+        ? "REFERENCE POSTER — the user has uploaded an existing poster as reference. Study its overall composition, color palette, mood, lighting style, decorative elements, and layout. Generate the new poster with a strong visual resemblance to the reference poster's design language (same typography vibe, similar background treatment, similar dressing style and pose energy), while keeping ALL the Taiwan ethnicity/age/skin rules."
+        : "";
       const sceneDesc = input.scene ? sceneMap[input.scene] : "upscale nightclub venue with premium lighting and luxurious interior";
 
       const featureKeywords = input.features.length > 0
@@ -1151,6 +1161,8 @@ const posterRouter = router({
         imagePrompt = `${ethnicLock}
 
 ${referenceVariationClause}
+${personCountClause}
+${referencePosterClause}
 
 Professional nightclub marketing poster for ${hotelNames[input.hotel]}, a premium luxury entertainment venue in Taiwan.
 Event theme: ${input.theme}.
@@ -1166,6 +1178,9 @@ Vertical portrait format, 9:16 aspect ratio.`;
       } else {
         imagePrompt = `${ethnicLock}
 
+${personCountClause}
+${referencePosterClause}
+
 Professional nightclub marketing poster for ${hotelNames[input.hotel]}, a premium luxury entertainment venue in Taiwan.
 Event theme: ${input.theme}.
 Featuring: ${personDesc}.
@@ -1179,7 +1194,7 @@ ${input.customPrompt ? `Additional details: ${input.customPrompt}.` : ""}
 ${qualityTerms}
 Vertical portrait format, 9:16 aspect ratio.
 
-REMINDER: The person MUST be Taiwanese (East Asian, Han Chinese / Taiwanese). Non-negotiable.`;
+REMINDER: The person(s) MUST be Taiwanese (East Asian, Han Chinese / Taiwanese)${input.personCount > 1 ? `, and there MUST be exactly ${input.personCount} women in the shot` : ""}. Non-negotiable.`;
       }
 
       const imageDataUrl = await geminiGenerateImage(ctx.env.GEMINI_API_KEY, imagePrompt);

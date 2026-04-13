@@ -570,6 +570,10 @@ export default function Poster() {
   const [useUploadedPhoto, setUseUploadedPhoto] = useState(false);
   const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState<string | null>(null);
   const [uploadedPhotoPreview, setUploadedPhotoPreview] = useState<string | null>(null);
+  const [personCount, setPersonCount] = useState<number>(1);
+  const [referencePosterUrl, setReferencePosterUrl] = useState<string | null>(null);
+  const [referencePosterPreview, setReferencePosterPreview] = useState<string | null>(null);
+  const refPosterInputRef = useRef<HTMLInputElement>(null);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [finalPosterUrl, setFinalPosterUrl] = useState<string | null>(null);
   const [generationCount, setGenerationCount] = useState(0);
@@ -591,6 +595,16 @@ export default function Poster() {
     },
     onError: (err) => {
       toast.error("上傳失敗：" + err.message);
+    },
+  });
+
+  const refPosterUploadMutation = trpc.poster.uploadPhoto.useMutation({
+    onSuccess: (data) => {
+      setReferencePosterUrl(data.base64 ? `data:${data.mimeType};base64,${data.base64}` : null);
+      toast.success("海報參考圖上傳成功");
+    },
+    onError: (err) => {
+      toast.error("海報參考圖上傳失敗：" + err.message);
     },
   });
 
@@ -686,6 +700,8 @@ export default function Poster() {
       features: selectedFeatures,
       hasUploadedPhoto: useUploadedPhoto && !!uploadedPhotoUrl,
       uploadedPhotoUrl: uploadedPhotoUrl ?? undefined,
+      referencePosterUrl: referencePosterUrl ?? undefined,
+      personCount,
       customPrompt: merged || undefined,
       effects: selectedEffects,
       personStyle: selectedPersonStyle || undefined,
@@ -1145,6 +1161,27 @@ export default function Poster() {
                       placeholder="選擇人物氣質（選填）"
                     />
                   </div>
+                  <div>
+                    <p className="text-xs mb-2" style={{ color: "rgba(255,255,255,0.45)" }}>
+                      人數 <span style={{ color: "rgba(255,255,255,0.3)" }}>({personCount} 人)</span>
+                    </p>
+                    <div className="grid grid-cols-6 gap-2">
+                      {[1, 2, 3, 4, 5, 6].map((n) => (
+                        <button
+                          key={n}
+                          onClick={() => setPersonCount(n)}
+                          className="py-2 rounded-lg text-sm transition-all"
+                          style={{
+                            background: personCount === n ? "rgba(240,192,64,0.18)" : "rgba(255,255,255,0.04)",
+                            border: `1px solid ${personCount === n ? "rgba(240,192,64,0.5)" : "rgba(255,255,255,0.08)"}`,
+                            color: personCount === n ? "#f0c040" : "rgba(255,255,255,0.55)",
+                          }}
+                        >
+                          {n}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -1259,6 +1296,89 @@ export default function Poster() {
                   }}
                   onFocus={(e) => { e.target.style.borderColor = "rgba(192,132,252,0.4)"; }}
                   onBlur={(e) => { e.target.style.borderColor = "rgba(201,168,76,0.15)"; }}
+                />
+              </div>
+              <div className="mt-4">
+                <h2 className="text-sm font-semibold mb-2" style={{ color: "rgba(255,255,255,0.7)" }}>
+                  海報參考上傳（選填）
+                </h2>
+                <p className="text-xs mb-2" style={{ color: "rgba(255,255,255,0.4)" }}>
+                  上傳現有海報，AI 會參考它的構圖、色調、風格來生成
+                </p>
+                {referencePosterPreview ? (
+                  <div className="flex items-start gap-3">
+                    <img
+                      src={referencePosterPreview}
+                      alt="參考海報"
+                      className="w-20 h-28 object-cover rounded-lg"
+                      style={{ border: "1px solid rgba(201,168,76,0.3)" }}
+                    />
+                    <div className="flex-1 flex flex-col gap-2">
+                      <button
+                        onClick={() => refPosterInputRef.current?.click()}
+                        disabled={refPosterUploadMutation.isPending}
+                        className="text-xs px-3 py-1.5 rounded-lg transition-all disabled:opacity-50"
+                        style={{
+                          background: "rgba(255,255,255,0.04)",
+                          border: "1px solid rgba(255,255,255,0.1)",
+                          color: "rgba(255,255,255,0.6)",
+                        }}
+                      >
+                        {refPosterUploadMutation.isPending ? "上傳中..." : "更換參考圖"}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setReferencePosterUrl(null);
+                          setReferencePosterPreview(null);
+                        }}
+                        className="text-xs px-3 py-1.5 rounded-lg transition-all"
+                        style={{
+                          background: "rgba(255,100,100,0.08)",
+                          border: "1px solid rgba(255,100,100,0.2)",
+                          color: "rgba(255,150,150,0.7)",
+                        }}
+                      >
+                        移除參考圖
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => refPosterInputRef.current?.click()}
+                    disabled={refPosterUploadMutation.isPending}
+                    className="w-full py-3 rounded-lg text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                    style={{
+                      background: "rgba(255,255,255,0.03)",
+                      border: "1px dashed rgba(201,168,76,0.3)",
+                      color: "rgba(255,255,255,0.55)",
+                    }}
+                  >
+                    <Upload size={14} />
+                    {refPosterUploadMutation.isPending ? "上傳中..." : "上傳參考海報"}
+                  </button>
+                )}
+                <input
+                  ref={refPosterInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      const dataUrl = reader.result as string;
+                      setReferencePosterPreview(dataUrl);
+                      const base64 = dataUrl.split(",")[1];
+                      refPosterUploadMutation.mutate({
+                        base64Data: base64,
+                        mimeType: file.type,
+                        fileName: file.name,
+                      });
+                    };
+                    reader.readAsDataURL(file);
+                    e.target.value = "";
+                  }}
                 />
               </div>
             </div>
