@@ -2,7 +2,7 @@ import { Link } from "wouter";
 import { FileText, Image, CalendarDays, ChevronRight, Zap, Shield, Target } from "lucide-react";
 
 const CHINATOWN_LOGO = "/logos/chinatown-transparent.png";
-const DIHAO_LOGO = "/logos/empire-transparent.png";
+const DIHAO_LOGO = "/logos/empire-new.jpeg";
 const SAMPLE_POSTER = "https://d2xsxph8kpxj0f.cloudfront.net/310419663032574653/Pha3yvm4xNX2ySLS98jSEw/S__29811458_0_54e44c60.jpg";
 
 const features = [
