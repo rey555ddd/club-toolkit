@@ -158,7 +158,7 @@ const posterRouter = router({
         uploadedPhotoUrl: z.string().optional(),
         customPrompt: z.string().optional(),
         effects: z.array(z.string()).default([]),
-        personStyle: z.enum(["elegant", "sweet", "fashionable", "graceful", "cool"]).optional(),
+        personStyle: z.enum(["elegant", "sweet", "fashionable", "graceful", "cool", "sexy"]).optional(),
         scene: z.enum(["vip_room", "dance_floor", "bar_counter", "red_carpet"]).optional(),
       })
     )
@@ -183,6 +183,7 @@ const posterRouter = router({
         fashionable: "a Taiwanese female hostess, East Asian (Han Chinese / Taiwanese) ethnicity, trendy 時尚網美 (Taiwan fashion influencer) aesthetic, styled wavy or sleek hair often with caramel / highlighted tones, fair skin, sharp defined eye makeup, bold lips, wearing contemporary designer outfit, modern chic Taiwanese influencer look",
         graceful: "a Taiwanese female hostess, East Asian (Han Chinese / Taiwanese) ethnicity, graceful 氣質女神 (Taiwan goddess) aesthetic, long flowing straight black hair, pale porcelain skin, delicate refined facial features typical of classic Taiwanese beauty, soft shimmer eyeshadow, gentle pink lips, wearing a classic evening dress, cultured refined Taiwanese hostess look",
         cool: "a Taiwanese female hostess, East Asian (Han Chinese / Taiwanese) ethnicity, bold 辣妹 (Taiwan hot-girl / 八大辣妹) nightlife aesthetic, long dyed hair (platinum, caramel, or deep chestnut) in Taiwan hot-girl styling, light olive skin with bronze glow, dramatic smoky eye makeup, feather lashes, nose contour, bold lips, wearing a figure-hugging sleek evening outfit, confident sultry Taiwanese 辣妹 look",
+        sexy: "a Taiwanese female hostess, East Asian (Han Chinese / Taiwanese) ethnicity, sexy 性感火辣 (Taiwan seductive hot-girl) aesthetic, long wavy glossy hair, toned curvy feminine figure, fair to light olive skin, sultry eye makeup, plump glossy lips, wearing a figure-flattering low-cut or body-con evening dress (tasteful elegant sexy, not vulgar), confident flirty expression, Taiwanese 八大 nightlife sex-appeal look, commercial fashion editorial quality",
       };
 
       // 場景映射（商業正規描述）

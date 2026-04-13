@@ -17,7 +17,7 @@ import {
 
 type Hotel = "chinatown" | "dihao" | "both";
 type PosterStyle = "neon_electronic" | "luxury_gold" | "festival_red" | "modern_minimal";
-type PersonStyle = "elegant" | "sweet" | "fashionable" | "graceful" | "cool";
+type PersonStyle = "elegant" | "sweet" | "fashionable" | "graceful" | "cool" | "sexy";
 type SceneType = "vip_room" | "dance_floor" | "bar_counter" | "red_carpet";
 
 interface PosterText {
@@ -70,6 +70,7 @@ const personStyleOptions: { id: PersonStyle; label: string; desc: string }[] = [
   { id: "fashionable", label: "時尚", desc: "潮流前衛、個性十足" },
   { id: "graceful", label: "氣質", desc: "溫婉大方、書卷氣息" },
   { id: "cool", label: "冷豔", desc: "神秘高冷、攝人心魄" },
+  { id: "sexy", label: "性感", desc: "撩人曲線、火辣誘惑" },
 ];
 
 const sceneOptions: { id: SceneType; label: string; desc: string }[] = [
