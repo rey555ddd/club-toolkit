@@ -940,8 +940,13 @@ export default function Poster() {
                 </button>
               </div>
 
+              <div className="mb-3 p-2.5 rounded-lg" style={{ background: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.25)" }}>
+                <p className="text-xs leading-relaxed" style={{ color: "rgba(252,211,77,0.9)" }}>
+                  ⚠️ <strong>排版／文案參考用</strong>：此處輸入的文字會疊加在海報上，僅供<strong>構圖示意與文案產出</strong>。特效字目前還無法達到印刷級水準，建議最終海報由美編在 Photoshop／Illustrator 重新加字。你可以下載「純圖（無字）」版本給設計師使用。
+                </p>
+              </div>
               <p className="text-xs mb-3" style={{ color: "rgba(255,255,255,0.35)" }}>
-                輸入文字會以「{currentStyle.label}」特效字渲染在海報上。可先讓 AI 推薦，再自行修改。
+                可先讓 AI 推薦文案，再自行修改。
               </p>
 
               <div className="space-y-3">
@@ -1278,9 +1283,17 @@ export default function Poster() {
                 placeholder="選擇場景（選填）"
               />
               <div className="mt-4">
-                <h2 className="text-sm font-semibold mb-2" style={{ color: "rgba(255,255,255,0.7)" }}>
-                  標題特效字型
-                </h2>
+                <div className="flex items-center gap-2 mb-2">
+                  <h2 className="text-sm font-semibold" style={{ color: "rgba(255,255,255,0.7)" }}>
+                    標題特效字型
+                  </h2>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "rgba(251,191,36,0.12)", color: "rgba(252,211,77,0.85)" }}>
+                    參考用
+                  </span>
+                </div>
+                <p className="text-[11px] mb-2" style={{ color: "rgba(255,255,255,0.35)" }}>
+                  僅作排版預覽，正式稿請由美編重新加字
+                </p>
                 <SelectDropdown
                   value={selectedTitleEffect}
                   onChange={(v) => setSelectedTitleEffect(v)}
