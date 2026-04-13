@@ -781,7 +781,19 @@ async function tryImagen4(apiKey: string, prompt: string): Promise<string | null
   }
 }
 
-async function tryGeminiImageModel(apiKey: string, prompt: string): Promise<string | null> {
+type RefImage = { mimeType: string; data: string; label: string };
+
+function parseDataUrl(dataUrl: string, label: string): RefImage | null {
+  const m = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!m) return null;
+  return { mimeType: m[1], data: m[2], label };
+}
+
+async function tryGeminiImageModel(
+  apiKey: string,
+  prompt: string,
+  refs: RefImage[] = []
+): Promise<string | null> {
   try {
     const client = getGeminiClient(apiKey);
     // @ts-expect-error - responseModalities is experimental API
@@ -792,9 +804,16 @@ async function tryGeminiImageModel(apiKey: string, prompt: string): Promise<stri
       },
     });
 
-    const result = await model.generateContent(
-      `Generate a professional vertical marketing poster (9:16 ratio) for a luxury nightclub in Taiwan. ${prompt}`
-    );
+    const textPart = {
+      text: `Generate a professional vertical marketing poster (9:16 ratio) for a luxury nightclub in Taiwan.${
+        refs.length ? `\n\nThe user has attached ${refs.length} reference image(s): ${refs.map(r => r.label).join("; ")}. Study them carefully and incorporate their style/composition/mood as instructed in the detailed prompt below.\n` : ""
+      }\n${prompt}`,
+    };
+    const imageParts = refs.map((r) => ({
+      inlineData: { mimeType: r.mimeType, data: r.data },
+    }));
+
+    const result = await model.generateContent([textPart, ...imageParts]);
 
     const parts = result.response.candidates?.[0]?.content?.parts ?? [];
     for (const part of parts) {
@@ -812,23 +831,25 @@ async function tryGeminiImageModel(apiKey: string, prompt: string): Promise<stri
   }
 }
 
-async function tryGemini20ImageModel(apiKey: string, prompt: string): Promise<string | null> {
+async function tryGemini20ImageModel(
+  apiKey: string,
+  prompt: string,
+  refs: RefImage[] = []
+): Promise<string | null> {
   try {
+    const textPart: { text: string } = {
+      text: `Generate a professional vertical marketing poster (9:16 ratio) for a luxury nightclub in Taiwan.${
+        refs.length ? `\n\nThe user has attached ${refs.length} reference image(s): ${refs.map(r => r.label).join("; ")}.\n` : ""
+      }\n${prompt}`,
+    };
+    const imageParts = refs.map((r) => ({ inlineData: { mimeType: r.mimeType, data: r.data } }));
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: `Generate a professional vertical marketing poster (9:16 ratio) for a luxury nightclub in Taiwan. ${prompt}`,
-                },
-              ],
-            },
-          ],
+          contents: [{ parts: [textPart, ...imageParts] }],
           generationConfig: {
             responseModalities: ["IMAGE", "TEXT"],
           },
@@ -866,29 +887,35 @@ async function tryGemini20ImageModel(apiKey: string, prompt: string): Promise<st
   }
 }
 
-async function geminiGenerateImage(apiKey: string, prompt: string): Promise<string | null> {
-  console.log("[Image] åè©¦ Imagen 4...");
+async function geminiGenerateImage(
+  apiKey: string,
+  prompt: string,
+  refs: RefImage[] = []
+): Promise<string | null> {
+  if (refs.length > 0) {
+    console.log(`[Image] ${refs.length} reference image(s) attached, using multimodal`);
+    const r = await tryGeminiImageModel(apiKey, prompt, refs);
+    if (r) return r;
+    console.log("[Image] gemini-2.5-flash-image failed, trying gemini-2.0-flash-lite multimodal");
+    const r2 = await tryGemini20ImageModel(apiKey, prompt, refs);
+    if (r2) return r2;
+    console.error("[Image] All multimodal models failed");
+    return null;
+  }
+
+  console.log("[Image] Trying Imagen 4 (text-to-image)");
   const imagen4Result = await tryImagen4(apiKey, prompt);
-  if (imagen4Result) {
-    console.log("[Image] Imagen 4 æå");
-    return imagen4Result;
-  }
+  if (imagen4Result) return imagen4Result;
 
-  console.log("[Image] Imagen 4 å¤±æï¼æ¹ç¨ gemini-2.5-flash-image fallback");
+  console.log("[Image] Imagen 4 failed, trying gemini-2.5-flash-image");
   const geminiImageResult = await tryGeminiImageModel(apiKey, prompt);
-  if (geminiImageResult) {
-    console.log("[Image] gemini-2.5-flash-image æå");
-    return geminiImageResult;
-  }
+  if (geminiImageResult) return geminiImageResult;
 
-  console.log("[Image] åè©¦ gemini-2.0-flash-lite image fallback...");
+  console.log("[Image] Trying gemini-2.0-flash-lite fallback");
   const gemini20Result = await tryGemini20ImageModel(apiKey, prompt);
-  if (gemini20Result) {
-    console.log("[Image] gemini-2.0-flash-lite æå");
-    return gemini20Result;
-  }
+  if (gemini20Result) return gemini20Result;
 
-  console.error("[Image] ææåççææ¹å¼åå¤±æ");
+  console.error("[Image] All image generation methods failed");
   return null;
 }
 
@@ -1201,7 +1228,17 @@ Vertical portrait format, 9:16 aspect ratio.
 REMINDER: The person(s) MUST be Taiwanese (East Asian, Han Chinese / Taiwanese)${input.personCount > 1 ? `, and there MUST be exactly ${input.personCount} women in the shot` : ""}. Non-negotiable.`;
       }
 
-      const imageDataUrl = await geminiGenerateImage(ctx.env.GEMINI_API_KEY, imagePrompt);
+      const refs: RefImage[] = [];
+      if (input.hasUploadedPhoto && input.uploadedPhotoUrl) {
+        const r = parseDataUrl(input.uploadedPhotoUrl, "character reference photo (use as style/pose inspiration for a DIFFERENT Taiwanese woman — do NOT clone the face)");
+        if (r) refs.push(r);
+      }
+      if (input.referencePosterUrl) {
+        const r = parseDataUrl(input.referencePosterUrl, "reference poster (match its composition, color palette, lighting, mood, typography placement, and overall design language)");
+        if (r) refs.push(r);
+      }
+
+      const imageDataUrl = await geminiGenerateImage(ctx.env.GEMINI_API_KEY, imagePrompt, refs);
 
       if (!imageDataUrl) {
         throw new Error("åççæå¤±æãImagen 4 éè¦ Google AI ä»è²»æ¹æ¡ï¼è«å° https://ai.dev/projects åç´å¾åè©¦ã");
