@@ -775,11 +775,11 @@ export default function Poster() {
               <Image size={20} style={{ color: "#c084fc" }} />
             </div>
             <h1 className="text-2xl font-bold" style={{ color: "#f5f0e8" }}>
-              海報美編產生器
+              女神海報生成器
             </h1>
           </div>
           <p className="text-sm ml-11" style={{ color: "rgba(255,255,255,0.45)" }}>
-            AI 生成海報底圖 + 自訂特效字，打造高質感宣傳海報
+            AI 生成台灣女神人物 + 夜店場景底圖，供美編排版使用
           </p>
         </div>
 

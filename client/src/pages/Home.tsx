@@ -16,8 +16,8 @@ const features = [
   },
   {
     icon: Image,
-    title: "海報美編",
-    desc: "上傳小姐照片或 AI 生成人物，搭配活動主題，快速產出高質感宣傳海報。",
+    title: "女神海報生成器",
+    desc: "AI 生成台灣女神人物（1-6 人）＋ 夜店場景底圖，下載純圖交給美編排版。",
     path: "/poster",
     tag: "AI 圖像生成",
     color: "#c084fc",

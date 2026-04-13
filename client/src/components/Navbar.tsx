@@ -8,7 +8,7 @@ const DIHAO_LOGO = "/logos/empire-transparent.png";
 const navItems = [
   { label: "首頁", path: "/" },
   { label: "文案產生器", path: "/copywriter" },
-  { label: "海報美編", path: "/poster" },
+  { label: "女神海報生成器", path: "/poster" },
   { label: "活動企劃師", path: "/planner" },
   { label: "修改建議", path: "/suggestions" },
 ];
