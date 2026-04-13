@@ -176,13 +176,13 @@ const posterRouter = router({
         both: "China Town Club x Empire Royal Club",
       };
 
-      // 人物氣質映射（商業正規描述）
+      // 人物氣質映射（台灣網美／辣妹美學 — 嚴格鎖定台灣女性）
       const personStyleMap: Record<string, string> = {
-        elegant: "elegant and sophisticated hostess in a luxurious evening gown, graceful posture, mature and refined appearance",
-        sweet: "charming and approachable hostess in a chic cocktail dress, warm smile, youthful and pleasant appearance",
-        fashionable: "trendy and stylish hostess in a contemporary designer outfit, confident pose, modern and chic appearance",
-        graceful: "graceful and poised hostess in a classic evening dress, gentle demeanor, cultured and refined appearance",
-        cool: "mysterious and alluring hostess in a sleek evening outfit, captivating gaze, cool and sophisticated appearance",
+        elegant: "a Taiwanese female hostess, East Asian (Han Chinese / Taiwanese) ethnicity, elegant 氣質網美 (Taiwan elegant influencer) aesthetic, long straight black or dark brown hair with subtle highlights, fair to light olive skin, refined almond-shaped eyes, groomed brows, defined fluttery lashes, glossy nude-pink lips, soft contouring, wearing a sophisticated evening gown, mature refined Taiwan nightlife hostess look",
+        sweet: "a Taiwanese female hostess, East Asian (Han Chinese / Taiwanese) ethnicity, sweet 甜美網美 (Taiwan sweet girl-next-door influencer) aesthetic, shoulder-length wavy black or dark brown hair, fair skin with healthy glow, large almond eyes, puppy-dog eyeliner, natural pink cheeks, glossy pink lips, wearing a chic cocktail dress, youthful approachable Taiwanese girl look",
+        fashionable: "a Taiwanese female hostess, East Asian (Han Chinese / Taiwanese) ethnicity, trendy 時尚網美 (Taiwan fashion influencer) aesthetic, styled wavy or sleek hair often with caramel / highlighted tones, fair skin, sharp defined eye makeup, bold lips, wearing contemporary designer outfit, modern chic Taiwanese influencer look",
+        graceful: "a Taiwanese female hostess, East Asian (Han Chinese / Taiwanese) ethnicity, graceful 氣質女神 (Taiwan goddess) aesthetic, long flowing straight black hair, pale porcelain skin, delicate refined facial features typical of classic Taiwanese beauty, soft shimmer eyeshadow, gentle pink lips, wearing a classic evening dress, cultured refined Taiwanese hostess look",
+        cool: "a Taiwanese female hostess, East Asian (Han Chinese / Taiwanese) ethnicity, bold 辣妹 (Taiwan hot-girl / 八大辣妹) nightlife aesthetic, long dyed hair (platinum, caramel, or deep chestnut) in Taiwan hot-girl styling, light olive skin with bronze glow, dramatic smoky eye makeup, feather lashes, nose contour, bold lips, wearing a figure-hugging sleek evening outfit, confident sultry Taiwanese 辣妹 look",
       };
 
       // 場景映射（商業正規描述）
@@ -193,7 +193,9 @@ const posterRouter = router({
         red_carpet: "glamorous red carpet event setting with spotlights, velvet ropes, and VIP atmosphere",
       };
 
-      const personDesc = input.personStyle ? personStyleMap[input.personStyle] : "elegant and glamorous hostess in a sophisticated evening gown, professional and alluring appearance";
+      const personDesc = input.personStyle ? personStyleMap[input.personStyle] : "a Taiwanese female hostess, East Asian (Han Chinese / Taiwanese) ethnicity, 網美 (Taiwanese influencer) aesthetic, long black or dark brown hair, fair to light olive skin, almond-shaped eyes, defined lashes, glossy lips, wearing a sophisticated evening gown, Taiwan nightlife hostess look";
+
+      const ethnicLock = "STRICT REQUIREMENT — the person MUST be a Taiwanese woman of East Asian (Han Chinese / Taiwanese) ethnicity, resembling real Taiwanese female influencers and 八大行業 hostesses. DO NOT generate Western, European, Caucasian, South Asian, African, Japanese, Korean, or mixed-heritage appearances. Makeup and styling must follow current Taiwan nightlife fashion trends (網美 / 辣妹 aesthetic). This is a non-negotiable requirement.";
       const sceneDesc = input.scene ? sceneMap[input.scene] : "upscale nightclub venue with premium lighting and luxurious interior";
 
       // 特色與效果（轉換為英文）
@@ -222,7 +224,9 @@ ${input.customPrompt ? `Additional details: ${input.customPrompt}.` : ""}
 ${qualityTerms}
 Vertical portrait format, 9:16 aspect ratio.`;
       } else {
-        imagePrompt = `Professional nightclub marketing poster for ${hotelNames[input.hotel]}, a premium luxury entertainment venue in Taiwan.
+        imagePrompt = `${ethnicLock}
+
+Professional nightclub marketing poster for ${hotelNames[input.hotel]}, a premium luxury entertainment venue in Taiwan.
 Event theme: ${input.theme}.
 Featuring: ${personDesc}.
 Setting: ${sceneDesc}.
@@ -232,7 +236,9 @@ ${effectKeywords}
 Design: elegant bilingual (Chinese and English) typography, hotel name prominently featured, professional layout with decorative elements.
 ${input.customPrompt ? `Additional details: ${input.customPrompt}.` : ""}
 ${qualityTerms}
-Vertical portrait format, 9:16 aspect ratio.`;
+Vertical portrait format, 9:16 aspect ratio.
+
+REMINDER: The person MUST be Taiwanese (East Asian, Han Chinese / Taiwanese). Non-negotiable.`;
       }
 
       // 使用 Imagen 4 生成圖片（需要 Gemini 付費方案）

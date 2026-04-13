@@ -1100,11 +1100,11 @@ const posterRouter = router({
       };
 
       const personStyleMap: Record<string, string> = {
-        elegant: "elegant and sophisticated hostess in a luxurious evening gown, graceful posture, mature and refined appearance, genuine warm smile with sparkling eyes, natural relaxed joyful expression, candid moment of laughter",
-        sweet: "charming and approachable hostess in a chic cocktail dress, bright radiant smile showing natural happiness, youthful and pleasant appearance, eyes lit up with genuine delight, relaxed and comfortable expression",
-        fashionable: "trendy and stylish hostess in a contemporary designer outfit, confident pose with a natural beaming smile, modern and chic appearance, authentic joyful expression, eyes crinkled with genuine happiness",
-        graceful: "graceful and poised hostess in a classic evening dress, gentle warm smile radiating natural charm, cultured and refined appearance, soft genuine expression of contentment, relaxed and inviting demeanor",
-        cool: "mysterious and alluring hostess in a sleek evening outfit, captivating gaze with a subtle confident smile, cool and sophisticated appearance, naturally relaxed expression, effortlessly charming demeanor",
+        elegant: "a Taiwanese female hostess, East Asian (Han Chinese / Taiwanese) ethnicity, elegant 氣質網美 (Taiwan elegant influencer) aesthetic, long straight black or dark brown hair with subtle highlights, fair to light olive skin, refined almond-shaped eyes, groomed brows, defined fluttery lashes, glossy nude-pink lips, soft contouring, wearing a sophisticated evening gown, mature and refined Taiwan nightlife hostess look, genuine warm smile",
+        sweet: "a Taiwanese female hostess, East Asian (Han Chinese / Taiwanese) ethnicity, sweet 甜美網美 (Taiwan sweet girl-next-door influencer) aesthetic, shoulder-length wavy black or dark brown hair, bangs or side-swept fringe, fair skin with healthy glow, large almond eyes, puppy-dog eyeliner style popular in Taiwan, natural pink cheeks, glossy pink lips, wearing a chic cocktail dress, youthful approachable Taiwanese girl look, bright radiant smile",
+        fashionable: "a Taiwanese female hostess, East Asian (Han Chinese / Taiwanese) ethnicity, trendy 時尚網美 (Taiwan fashion influencer) aesthetic, styled wavy or sleek hair often with caramel / highlighted tones popular in Taipei, fair skin, sharp defined eye makeup following current Taiwan beauty trends, matte or glossy bold lips, wearing contemporary designer outfit, modern and chic Taiwanese influencer look, confident expression",
+        graceful: "a Taiwanese female hostess, East Asian (Han Chinese / Taiwanese) ethnicity, graceful 氣質女神 (Taiwan goddess) aesthetic, long flowing straight black hair, pale porcelain skin, delicate refined facial features typical of classic Taiwanese beauty, soft shimmer eyeshadow, natural flushed cheeks, gentle pink lips, wearing a classic evening dress, cultured refined Taiwanese hostess look, gentle warm smile",
+        cool: "a Taiwanese female hostess, East Asian (Han Chinese / Taiwanese) ethnicity, bold 辣妹 (Taiwan hot-girl / 八大辣妹) nightlife aesthetic, long dyed hair (platinum, caramel, or deep chestnut) styled in Taiwan hot-girl fashion, light olive skin with bronze glow, dramatic smoky eye makeup, feather lashes, nose contour, bold matte or glossy lips, wearing a figure-hugging sleek evening outfit, confident sultry Taiwanese 辣妹 nightlife look, captivating gaze",
       };
 
       const sceneMap: Record<string, string> = {
@@ -1114,7 +1114,9 @@ const posterRouter = router({
         red_carpet: "glamorous red carpet event setting with spotlights, velvet ropes, and VIP atmosphere",
       };
 
-      const personDesc = input.personStyle ? personStyleMap[input.personStyle] : "elegant and glamorous hostess in a sophisticated evening gown, professional and alluring appearance, genuine warm radiant smile, natural relaxed joyful expression, eyes sparkling with authentic happiness";
+      const personDesc = input.personStyle ? personStyleMap[input.personStyle] : "a Taiwanese female hostess, East Asian (Han Chinese / Taiwanese) ethnicity, elegant 網美 (Taiwanese influencer) aesthetic, long black or dark brown hair, fair to light olive skin, almond-shaped eyes, defined lashes, glossy lips, wearing a sophisticated evening gown, Taiwan nightlife hostess look, genuine warm smile";
+
+      const ethnicLock = "STRICT REQUIREMENT — the person MUST be a Taiwanese woman of East Asian (Han Chinese / Taiwanese) ethnicity, resembling real Taiwanese female influencers and 八大行業 hostesses. DO NOT generate Western, European, Caucasian, South Asian, African, Japanese, Korean, or mixed-heritage appearances. Makeup and styling must follow current Taiwan nightlife fashion trends (網美 / 辣妹 aesthetic). This is a non-negotiable requirement.";
       const sceneDesc = input.scene ? sceneMap[input.scene] : "upscale nightclub venue with premium lighting and luxurious interior";
 
       const featureKeywords = input.features.length > 0
@@ -1146,7 +1148,9 @@ ${input.customPrompt ? `Additional details: ${input.customPrompt}.` : ""}
 ${qualityTerms}
 Vertical portrait format, 9:16 aspect ratio.`;
       } else {
-        imagePrompt = `Professional nightclub marketing poster for ${hotelNames[input.hotel]}, a premium luxury entertainment venue in Taiwan.
+        imagePrompt = `${ethnicLock}
+
+Professional nightclub marketing poster for ${hotelNames[input.hotel]}, a premium luxury entertainment venue in Taiwan.
 Event theme: ${input.theme}.
 Featuring: ${personDesc}.
 Setting: ${sceneDesc}.
@@ -1157,7 +1161,9 @@ ${typographyLine}
 ${personPhotographyTerms}
 ${input.customPrompt ? `Additional details: ${input.customPrompt}.` : ""}
 ${qualityTerms}
-Vertical portrait format, 9:16 aspect ratio.`;
+Vertical portrait format, 9:16 aspect ratio.
+
+REMINDER: The person MUST be Taiwanese (East Asian, Han Chinese / Taiwanese). Non-negotiable.`;
       }
 
       const imageDataUrl = await geminiGenerateImage(ctx.env.GEMINI_API_KEY, imagePrompt);
