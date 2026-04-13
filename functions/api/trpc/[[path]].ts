@@ -1164,6 +1164,8 @@ const posterRouter = router({
 
       const framingClause = "CRITICAL FRAMING RULE — ALL faces must be FULLY VISIBLE within the frame. NEVER crop, cut off, or partially hide any face at the edges of the poster. Every person's complete face (forehead, eyes, nose, mouth, chin) must be entirely inside the composition. Leave adequate margin between each face and the edge of the image. If necessary, zoom out or rearrange the composition to include everyone's full face. Face cropping is strictly forbidden.";
 
+      const naturalismClause = "NATURAL REALISM — avoid the over-polished AI look. The skin must have REAL texture: visible pores, slight imperfections, subtle blemishes, natural peach fuzz, real sheen rather than plastic smoothness. Skin should NOT look airbrushed, filtered, or CGI. Include tiny natural asymmetries in the face (slightly uneven eyes/brows/smile) like real humans have. Lighting must look like real nightclub/studio photography — soft directional light with visible shadow gradation on the face and neck, NOT the flat even 'beauty mode' glow. Hair should have individual strands, slight flyaways, not a helmet of perfection. Expression should feel candid and natural, not frozen or doll-like. Think real Taiwanese influencer IG photos and real hostess candid shots — slightly imperfect, clearly human, photographable in real life. The goal: 80% polished commercial quality, 20% raw authenticity.";
+
       const referencePosterClause = input.referencePosterUrl
         ? "REFERENCE POSTER — the user has uploaded an existing poster as reference. Study its overall composition, color palette, mood, lighting style, decorative elements, and layout. Generate the new poster with a strong visual resemblance to the reference poster's design language (same typography vibe, similar background treatment, similar dressing style and pose energy), while keeping ALL the Taiwan ethnicity/age/skin rules."
         : "";
@@ -1192,6 +1194,7 @@ const posterRouter = router({
 ${referenceVariationClause}
 ${personCountClause}
 ${framingClause}
+${naturalismClause}
 ${referencePosterClause}
 
 Professional nightclub marketing poster for ${hotelNames[input.hotel]}, a premium luxury entertainment venue in Taiwan.
@@ -1210,6 +1213,7 @@ Vertical portrait format, 9:16 aspect ratio.`;
 
 ${personCountClause}
 ${framingClause}
+${naturalismClause}
 ${referencePosterClause}
 
 Professional nightclub marketing poster for ${hotelNames[input.hotel]}, a premium luxury entertainment venue in Taiwan.
