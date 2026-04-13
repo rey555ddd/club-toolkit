@@ -735,6 +735,15 @@ export default function Poster() {
     link.click();
   };
 
+  const handleDownloadClean = () => {
+    if (!generatedImageUrl) return;
+    const link = document.createElement("a");
+    link.href = generatedImageUrl;
+    link.download = `poster-clean-${Date.now()}.png`;
+    link.target = "_blank";
+    link.click();
+  };
+
   const toggleFeature = (f: string) => {
     setSelectedFeatures((prev) =>
       prev.includes(f) ? prev.filter((x) => x !== f) : [...prev, f]
@@ -1486,7 +1495,7 @@ export default function Poster() {
                         boxShadow: `0 0 40px ${currentStyle.accent}20`,
                       }}
                     />
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap gap-2 justify-center">
                       <button
                         onClick={() => handleGenerate()}
                         className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs transition-all"
@@ -1498,6 +1507,19 @@ export default function Poster() {
                       >
                         <RefreshCw size={13} />
                         換底圖
+                      </button>
+                      <button
+                        onClick={handleDownloadClean}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs transition-all"
+                        style={{
+                          background: "rgba(192,132,252,0.12)",
+                          border: "1px solid rgba(192,132,252,0.35)",
+                          color: "#e9d5ff",
+                        }}
+                        title="下載 AI 原始圖片，不含合成的文字，方便美編自行排版"
+                      >
+                        <Download size={13} />
+                        下載純圖（無字）
                       </button>
                       <button
                         onClick={handleDownload}
