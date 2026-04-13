@@ -1135,6 +1135,8 @@ const posterRouter = router({
         ? `CRITICAL GROUP COUNT — Generate EXACTLY ${input.personCount} Taiwanese women standing together in the same frame (group shot, ensemble poster style). All ${input.personCount} women must follow the ethnicity/age/skin rules above. Vary their outfits (different colors and styles of evening dresses), slightly vary their hairstyles (long straight, long wavy, medium wavy), but keep all within the chosen personal style aesthetic. Arrange them in a visually balanced composition typical of Taiwanese nightclub marketing posters — e.g. standing in a row, slightly offset in depth, or grouped in a V-formation. DO NOT generate a different number of people. Exactly ${input.personCount}.`
         : "";
 
+      const framingClause = "CRITICAL FRAMING RULE — ALL faces must be FULLY VISIBLE within the frame. NEVER crop, cut off, or partially hide any face at the edges of the poster. Every person's complete face (forehead, eyes, nose, mouth, chin) must be entirely inside the composition. Leave adequate margin between each face and the edge of the image. If necessary, zoom out or rearrange the composition to include everyone's full face. Face cropping is strictly forbidden.";
+
       const referencePosterClause = input.referencePosterUrl
         ? "REFERENCE POSTER — the user has uploaded an existing poster as reference. Study its overall composition, color palette, mood, lighting style, decorative elements, and layout. Generate the new poster with a strong visual resemblance to the reference poster's design language (same typography vibe, similar background treatment, similar dressing style and pose energy), while keeping ALL the Taiwan ethnicity/age/skin rules."
         : "";
@@ -1162,6 +1164,7 @@ const posterRouter = router({
 
 ${referenceVariationClause}
 ${personCountClause}
+${framingClause}
 ${referencePosterClause}
 
 Professional nightclub marketing poster for ${hotelNames[input.hotel]}, a premium luxury entertainment venue in Taiwan.
@@ -1179,6 +1182,7 @@ Vertical portrait format, 9:16 aspect ratio.`;
         imagePrompt = `${ethnicLock}
 
 ${personCountClause}
+${framingClause}
 ${referencePosterClause}
 
 Professional nightclub marketing poster for ${hotelNames[input.hotel]}, a premium luxury entertainment venue in Taiwan.

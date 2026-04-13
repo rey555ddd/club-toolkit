@@ -214,6 +214,8 @@ const posterRouter = router({
         ? `CRITICAL GROUP COUNT — Generate EXACTLY ${input.personCount} Taiwanese women in the same frame (group shot). All follow the ethnicity/age/skin rules above. Vary outfits (different colors and styles) and hairstyles, all within the chosen personal style. Balanced composition typical of Taiwan nightclub posters.`
         : "";
 
+      const framingClause = "CRITICAL FRAMING RULE — ALL faces must be FULLY VISIBLE within the frame. NEVER crop, cut off, or partially hide any face at the edges of the poster. Every person's complete face must be entirely inside the composition with adequate margin. Face cropping is strictly forbidden.";
+
       const referencePosterClause = input.referencePosterUrl
         ? "REFERENCE POSTER — user uploaded an existing poster. Match its composition, color palette, mood, lighting, decorative elements, typography vibe, and overall design language, while keeping ALL Taiwan ethnicity/age/skin rules."
         : "";
@@ -238,6 +240,7 @@ const posterRouter = router({
 
 ${referenceVariationClause}
 ${personCountClause}
+${framingClause}
 ${referencePosterClause}
 
 Professional nightclub marketing poster for ${hotelNames[input.hotel]}, a premium luxury entertainment venue in Taiwan.
@@ -255,6 +258,7 @@ Vertical portrait format, 9:16 aspect ratio.`;
         imagePrompt = `${ethnicLock}
 
 ${personCountClause}
+${framingClause}
 ${referencePosterClause}
 
 Professional nightclub marketing poster for ${hotelNames[input.hotel]}, a premium luxury entertainment venue in Taiwan.
