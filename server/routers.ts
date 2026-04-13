@@ -159,7 +159,7 @@ const posterRouter = router({
         customPrompt: z.string().optional(),
         effects: z.array(z.string()).default([]),
         personStyle: z.enum(["elegant", "sweet", "fashionable", "graceful", "cool", "sexy"]).optional(),
-        scene: z.enum(["vip_room", "dance_floor", "bar_counter", "red_carpet"]).optional(),
+        scene: z.enum(["vip_room", "dance_floor", "bar_counter", "red_carpet", "stage_show", "lounge_sofa", "champagne_tower", "edm_party", "birthday_vip", "starlight_corridor"]).optional(),
       })
     )
     .mutation(async ({ input }) => {
@@ -192,11 +192,21 @@ const posterRouter = router({
         dance_floor: "vibrant nightclub dance floor with dynamic lighting effects and energetic atmosphere",
         bar_counter: "elegant bar counter with premium spirits display, professional bar setup, and sophisticated ambiance",
         red_carpet: "glamorous red carpet event setting with spotlights, velvet ropes, and VIP atmosphere",
+        stage_show: "nightclub stage performance setting with spotlights, laser beams, LED walls, and dramatic stage lighting",
+        lounge_sofa: "upscale velvet sofa booth seating area with warm ambient lighting, low tables, bottle service, and intimate lounge atmosphere",
+        champagne_tower: "glamorous champagne tower ceremony with sparkling crystal glasses, golden champagne flowing, sparklers, and celebratory mood",
+        edm_party: "high-energy EDM electronic music party with fog machines, laser lights, LED screens, raised hands, confetti, and euphoric crowd atmosphere",
+        birthday_vip: "exclusive VIP birthday celebration setup with custom LED signage, balloon arch, cake, sparklers, and premium bottle service",
+        starlight_corridor: "glamorous starlight entrance corridor with illuminated walkway, twinkling bokeh lights, mirrored walls, and red-carpet arrival mood",
       };
 
       const personDesc = input.personStyle ? personStyleMap[input.personStyle] : "a Taiwanese female hostess, East Asian (Han Chinese / Taiwanese) ethnicity, 網美 (Taiwanese influencer) aesthetic, long black or dark brown hair, fair to light olive skin, almond-shaped eyes, defined lashes, glossy lips, wearing a sophisticated evening gown, Taiwan nightlife hostess look";
 
-      const ethnicLock = "STRICT REQUIREMENT — the person MUST be a Taiwanese woman of East Asian (Han Chinese / Taiwanese) ethnicity, resembling real Taiwanese female influencers and 八大行業 hostesses. DO NOT generate Western, European, Caucasian, South Asian, African, Japanese, Korean, or mixed-heritage appearances. Makeup and styling must follow current Taiwan nightlife fashion trends (網美 / 辣妹 aesthetic). This is a non-negotiable requirement.";
+      const ethnicLock = "STRICT REQUIREMENT — the person MUST be a Taiwanese woman of East Asian (Han Chinese / Taiwanese) ethnicity, AGE 21 to 25 years old (young adult, fresh youthful appearance, NOT middle-aged), FAIR to LIGHT skin (porcelain or light ivory tone, bright and luminous, NOT tanned, NOT dark, NOT olive-dark), resembling real young Taiwanese female influencers and 網美. DO NOT generate Western, European, Caucasian, South Asian, African, Japanese, Korean, or mixed-heritage appearances. DO NOT generate anyone older than 25 or with darker/tanned skin. Makeup and styling must follow current Taiwan nightlife fashion trends (網美 / 辣妹 aesthetic). This is a non-negotiable requirement.";
+
+      const referenceVariationClause = (input.hasUploadedPhoto && input.uploadedPhotoUrl)
+        ? "IMPORTANT — use the uploaded reference photo only as STYLE / VIBE / POSE inspiration. Generate a DIFFERENT Taiwanese woman who looks similar to the reference but is clearly a different individual (different face, slightly different hairstyle, similar overall mood and aesthetic). Do NOT copy the reference face exactly. The new person still must follow all ethnic and age rules above."
+        : "";
       const sceneDesc = input.scene ? sceneMap[input.scene] : "upscale nightclub venue with premium lighting and luxurious interior";
 
       // 特色與效果（轉換為英文）
@@ -214,8 +224,13 @@ const posterRouter = router({
       let imagePrompt = "";
 
       if (input.hasUploadedPhoto && input.uploadedPhotoUrl) {
-        imagePrompt = `Professional nightclub marketing poster for ${hotelNames[input.hotel]}, a premium luxury entertainment venue in Taiwan.
+        imagePrompt = `${ethnicLock}
+
+${referenceVariationClause}
+
+Professional nightclub marketing poster for ${hotelNames[input.hotel]}, a premium luxury entertainment venue in Taiwan.
 Event theme: ${input.theme}.
+Featuring: ${personDesc}.
 Setting: ${sceneDesc}.
 Style: ${styleDescriptions[input.style]}.
 ${featureKeywords}

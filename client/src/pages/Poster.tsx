@@ -18,7 +18,7 @@ import {
 type Hotel = "chinatown" | "dihao" | "both";
 type PosterStyle = "neon_electronic" | "luxury_gold" | "festival_red" | "modern_minimal";
 type PersonStyle = "elegant" | "sweet" | "fashionable" | "graceful" | "cool" | "sexy";
-type SceneType = "vip_room" | "dance_floor" | "bar_counter" | "red_carpet";
+type SceneType = "vip_room" | "dance_floor" | "bar_counter" | "red_carpet" | "stage_show" | "lounge_sofa" | "champagne_tower" | "edm_party" | "birthday_vip" | "starlight_corridor";
 
 interface PosterText {
   title: string;
@@ -78,6 +78,12 @@ const sceneOptions: { id: SceneType; label: string; desc: string }[] = [
   { id: "dance_floor", label: "舞池派對", desc: "燈光閃爍的熱鬧舞池" },
   { id: "bar_counter", label: "酒吧吧台", desc: "精緻調酒吧台環境" },
   { id: "red_carpet", label: "紅毯走秀", desc: "星光紅毯貴賓場合" },
+  { id: "stage_show", label: "舞台表演", desc: "聚光燈與雷射舞台" },
+  { id: "lounge_sofa", label: "沙發卡座", desc: "絲絨沙發私密卡座" },
+  { id: "champagne_tower", label: "香檳塔", desc: "水晶杯香檳塔儀式" },
+  { id: "edm_party", label: "電子狂歡", desc: "EDM 煙霧雷射派對" },
+  { id: "birthday_vip", label: "生日包場", desc: "生日慶祝尊榮包場" },
+  { id: "starlight_corridor", label: "星光走道", desc: "閃耀入口星光走道" },
 ];
 
 const themeOptions = [
@@ -407,6 +413,7 @@ export default function Poster() {
   const [customTheme, setCustomTheme] = useState("");
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
   const [customPrompt, setCustomPrompt] = useState("");
+  const [refineInstruction, setRefineInstruction] = useState("");
   const [selectedEffects, setSelectedEffects] = useState<string[]>([]);
   const [useUploadedPhoto, setUseUploadedPhoto] = useState(false);
   const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState<string | null>(null);
@@ -507,12 +514,17 @@ export default function Poster() {
     reader.readAsDataURL(file);
   };
 
-  const handleGenerate = () => {
+  const handleGenerate = (extraInstruction?: string) => {
     const theme = customTheme || selectedTheme;
     if (!theme) {
       toast.error("請選擇或填寫活動主題");
       return;
     }
+
+    const merged = [customPrompt, extraInstruction ?? refineInstruction]
+      .filter((s) => s && s.trim())
+      .join("。")
+      .trim();
 
     generateMutation.mutate({
       hotel: selectedHotel,
@@ -521,7 +533,7 @@ export default function Poster() {
       features: selectedFeatures,
       hasUploadedPhoto: useUploadedPhoto && !!uploadedPhotoUrl,
       uploadedPhotoUrl: uploadedPhotoUrl ?? undefined,
-      customPrompt: customPrompt || undefined,
+      customPrompt: merged || undefined,
       effects: selectedEffects,
       personStyle: selectedPersonStyle || undefined,
       scene: selectedScene || undefined,
@@ -1089,7 +1101,7 @@ export default function Poster() {
 
             {/* 生成按鈕 */}
             <button
-              onClick={handleGenerate}
+              onClick={() => handleGenerate()}
               disabled={generateMutation.isPending || (!selectedTheme && !customTheme)}
               className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all"
               style={{
@@ -1192,7 +1204,7 @@ export default function Poster() {
                     />
                     <div className="flex gap-3">
                       <button
-                        onClick={handleGenerate}
+                        onClick={() => handleGenerate()}
                         className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs transition-all"
                         style={{
                           background: "rgba(255,255,255,0.05)",
@@ -1214,6 +1226,44 @@ export default function Poster() {
                       >
                         <Download size={13} />
                         下載海報
+                      </button>
+                    </div>
+                    {/* Refine instruction box */}
+                    <div className="w-full mt-2 p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                      <label className="text-xs block mb-2" style={{ color: "rgba(255,255,255,0.55)" }}>
+                        <Pencil size={11} className="inline mr-1" />
+                        修改指令（例：皮膚再白一點、頭髮捲一點、換成紅色禮服）
+                      </label>
+                      <textarea
+                        value={refineInstruction}
+                        onChange={(e) => setRefineInstruction(e.target.value)}
+                        placeholder="輸入你想調整的地方，按『套用指令重新生成』"
+                        rows={2}
+                        className="w-full px-3 py-2 rounded-lg text-xs outline-none resize-none"
+                        style={{
+                          background: "rgba(0,0,0,0.3)",
+                          border: "1px solid rgba(255,255,255,0.08)",
+                          color: "rgba(255,255,255,0.85)",
+                        }}
+                      />
+                      <button
+                        onClick={() => {
+                          if (!refineInstruction.trim()) {
+                            toast.error("請先輸入修改指令");
+                            return;
+                          }
+                          handleGenerate(refineInstruction);
+                        }}
+                        disabled={generateMutation.isPending}
+                        className="mt-2 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs transition-all disabled:opacity-50"
+                        style={{
+                          background: "linear-gradient(135deg, rgba(192,132,252,0.2), rgba(201,168,76,0.2))",
+                          border: "1px solid rgba(192,132,252,0.35)",
+                          color: "#e9d5ff",
+                        }}
+                      >
+                        <RefreshCw size={13} />
+                        套用指令重新生成
                       </button>
                     </div>
                     {/* Quick text edit hint */}
