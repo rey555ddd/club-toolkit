@@ -19,6 +19,7 @@ type Hotel = "chinatown" | "dihao" | "both";
 type PosterStyle = "neon_electronic" | "luxury_gold" | "festival_red" | "modern_minimal";
 type PersonStyle = "elegant" | "sweet" | "fashionable" | "graceful" | "cool" | "sexy";
 type SceneType = "vip_room" | "dance_floor" | "bar_counter" | "red_carpet" | "stage_show" | "lounge_sofa" | "champagne_tower" | "edm_party" | "birthday_vip" | "starlight_corridor";
+type TitleEffect = "gold_blaze" | "festive_red" | "neon_electric" | "elegant_calligraphy";
 
 interface PosterText {
   title: string;
@@ -102,11 +103,183 @@ const effectOptions = [
 ];
 
 // ─── Canvas text rendering with effects ──────────────────────────────────
-function renderTextOnCanvas(
+// Title effect options shown in UI
+const titleEffectOptions: { id: TitleEffect; label: string; desc: string }[] = [
+  { id: "gold_blaze", label: "金光閃耀", desc: "厚重金漸層 + 深色描邊" },
+  { id: "festive_red", label: "喜慶紅金", desc: "紅金漸層 + 白色描邊" },
+  { id: "neon_electric", label: "霓虹電音", desc: "紫藍漸層 + 強光暈" },
+  { id: "elegant_calligraphy", label: "優雅書法", desc: "書法體 + 金色立體" },
+];
+
+// Auto-map poster style → default title effect
+const styleToTitleEffect: Record<PosterStyle, TitleEffect> = {
+  neon_electronic: "neon_electric",
+  luxury_gold: "gold_blaze",
+  festival_red: "festive_red",
+  modern_minimal: "elegant_calligraphy",
+};
+
+// Draw a title with the selected effect (advanced canvas rendering to approximate pro poster typography)
+function drawTitle(
+  ctx: CanvasRenderingContext2D,
+  title: string,
+  cx: number,
+  cy: number,
+  size: number,
+  effect: TitleEffect,
+) {
+  const applyFill = (gradStops: [number, string][]) => {
+    const g = ctx.createLinearGradient(cx, cy - size * 0.7, cx, cy + size * 0.2);
+    gradStops.forEach(([stop, color]) => g.addColorStop(stop, color));
+    ctx.fillStyle = g;
+  };
+
+  if (effect === "gold_blaze") {
+    ctx.font = `900 ${size}px "ZCOOL KuaiLe", "Noto Serif TC", "Noto Sans TC", sans-serif`;
+    // Outer dark glow for depth
+    ctx.save();
+    ctx.shadowColor = "rgba(80, 40, 0, 0.9)";
+    ctx.shadowBlur = size * 0.35;
+    ctx.shadowOffsetY = size * 0.06;
+    ctx.fillStyle = "rgba(40,20,0,1)";
+    ctx.fillText(title, cx, cy);
+    ctx.restore();
+    // Thick dark stroke
+    ctx.save();
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = "#3a1e00";
+    ctx.lineWidth = size * 0.14;
+    ctx.strokeText(title, cx, cy);
+    // Thinner warm stroke over
+    ctx.strokeStyle = "#8a4d00";
+    ctx.lineWidth = size * 0.07;
+    ctx.strokeText(title, cx, cy);
+    ctx.restore();
+    // Gold gradient fill
+    ctx.save();
+    applyFill([
+      [0, "#fff7c2"],
+      [0.35, "#ffd94a"],
+      [0.55, "#ff8a00"],
+      [0.75, "#ffc93a"],
+      [1, "#fff7c2"],
+    ]);
+    ctx.fillText(title, cx, cy);
+    // Inner highlight band
+    ctx.save();
+    const clipG = ctx.createLinearGradient(cx, cy - size * 0.5, cx, cy + size * 0.1);
+    clipG.addColorStop(0, "rgba(255,255,255,0.85)");
+    clipG.addColorStop(0.45, "rgba(255,255,255,0.15)");
+    clipG.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = clipG;
+    ctx.fillText(title, cx, cy - size * 0.02);
+    ctx.restore();
+    ctx.restore();
+    return;
+  }
+
+  if (effect === "festive_red") {
+    ctx.font = `900 ${size}px "Noto Serif TC", "ZCOOL KuaiLe", sans-serif`;
+    // Outer dark red glow
+    ctx.save();
+    ctx.shadowColor = "rgba(80, 0, 0, 0.85)";
+    ctx.shadowBlur = size * 0.3;
+    ctx.shadowOffsetY = size * 0.08;
+    ctx.fillStyle = "rgba(40,0,0,1)";
+    ctx.fillText(title, cx, cy);
+    ctx.restore();
+    // White thick stroke
+    ctx.save();
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = "#fff8e0";
+    ctx.lineWidth = size * 0.13;
+    ctx.strokeText(title, cx, cy);
+    // Red-black thin inner stroke
+    ctx.strokeStyle = "#5a0000";
+    ctx.lineWidth = size * 0.05;
+    ctx.strokeText(title, cx, cy);
+    ctx.restore();
+    // Red→gold gradient fill
+    ctx.save();
+    applyFill([
+      [0, "#ffec5c"],
+      [0.4, "#ff5555"],
+      [0.7, "#c00000"],
+      [1, "#ffd24a"],
+    ]);
+    ctx.fillText(title, cx, cy);
+    ctx.restore();
+    return;
+  }
+
+  if (effect === "neon_electric") {
+    ctx.font = `900 ${size}px "Noto Sans TC", sans-serif`;
+    // Triple-layer purple glow
+    ctx.save();
+    for (let i = 0; i < 3; i++) {
+      ctx.shadowColor = "#a855f7";
+      ctx.shadowBlur = size * 0.5;
+      ctx.fillStyle = "#f0abfc";
+      ctx.fillText(title, cx, cy);
+    }
+    ctx.restore();
+    // Cyan thin stroke
+    ctx.save();
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = "#22d3ee";
+    ctx.lineWidth = size * 0.04;
+    ctx.shadowColor = "#22d3ee";
+    ctx.shadowBlur = size * 0.15;
+    ctx.strokeText(title, cx, cy);
+    ctx.restore();
+    // White-pink gradient fill
+    ctx.save();
+    applyFill([
+      [0, "#ffffff"],
+      [0.5, "#f0abfc"],
+      [1, "#c084fc"],
+    ]);
+    ctx.shadowColor = "rgba(168, 85, 247, 0.9)";
+    ctx.shadowBlur = size * 0.3;
+    ctx.fillText(title, cx, cy);
+    ctx.restore();
+    return;
+  }
+
+  // elegant_calligraphy
+  ctx.font = `400 ${size}px "Ma Shan Zheng", "Noto Serif TC", serif`;
+  // Gold 3D offset shadow (multiple offsets for depth)
+  ctx.save();
+  for (let i = 8; i >= 1; i--) {
+    ctx.fillStyle = `rgba(184, 140, 40, ${0.12 + (9 - i) * 0.04})`;
+    ctx.fillText(title, cx + i * 0.5, cy + i * 0.5);
+  }
+  ctx.restore();
+  // Outer soft black shadow
+  ctx.save();
+  ctx.shadowColor = "rgba(0,0,0,0.7)";
+  ctx.shadowBlur = size * 0.25;
+  ctx.fillStyle = "#ffffff";
+  ctx.fillText(title, cx, cy);
+  ctx.restore();
+  // Thin gold stroke
+  ctx.save();
+  ctx.strokeStyle = "rgba(201,168,76,0.9)";
+  ctx.lineWidth = Math.max(1, size * 0.015);
+  ctx.strokeText(title, cx, cy);
+  ctx.restore();
+}
+
+async function renderTextOnCanvas(
   baseImageUrl: string,
   text: PosterText,
   style: PosterStyle,
+  titleEffect: TitleEffect,
 ): Promise<string> {
+  // Wait for custom fonts to be ready so effects render with the correct typeface
+  if (typeof document !== "undefined" && document.fonts && document.fonts.ready) {
+    try { await document.fonts.ready; } catch { /* ignore */ }
+  }
   return new Promise((resolve, reject) => {
     const img = new window.Image();
     img.crossOrigin = "anonymous";
@@ -249,43 +422,21 @@ function renderTextOnCanvas(
         ctx.shadowBlur = 0;
       }
 
-      // Title — the main effect text
+      // Title — the main effect text (handled by drawTitle helper)
       if (text.title) {
         const titleY = H * 0.68;
-        ctx.font = `900 ${titleSize}px "Noto Sans TC", sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "alphabetic";
+        drawTitle(ctx, text.title, W / 2, titleY, titleSize, titleEffect);
 
-        // Glow effect
-        if (cfg.glowColor && cfg.glowBlur) {
-          ctx.shadowColor = cfg.glowColor;
-          ctx.shadowBlur = cfg.glowBlur;
-          // Draw multiple times for stronger glow
-          ctx.fillStyle = cfg.titleColor;
-          ctx.fillText(text.title, W / 2, titleY);
-          ctx.fillText(text.title, W / 2, titleY);
-        }
-
-        // Stroke for depth
-        if (cfg.titleStroke) {
-          ctx.strokeStyle = cfg.titleStroke;
-          ctx.lineWidth = 2;
-          ctx.shadowBlur = 0;
-          ctx.strokeText(text.title, W / 2, titleY);
-        }
-
-        // Final fill
-        ctx.shadowColor = cfg.titleShadow;
-        ctx.shadowBlur = cfg.glowBlur ? cfg.glowBlur / 2 : 4;
-        ctx.fillStyle = cfg.titleColor;
-        ctx.fillText(text.title, W / 2, titleY);
-        ctx.shadowBlur = 0;
-
-        // Decorative line under title
-        const lineW = Math.min(ctx.measureText(text.title).width * 0.6, W * 0.5);
-        ctx.strokeStyle = cfg.titleColor + "40";
+        // Decorative gold line under title
+        const lineMetrics = ctx.measureText(text.title);
+        const lineW = Math.min(lineMetrics.width * 0.55, W * 0.5);
+        ctx.strokeStyle = "rgba(201,168,76,0.55)";
         ctx.lineWidth = 1.5;
         ctx.beginPath();
-        ctx.moveTo(W / 2 - lineW / 2, titleY + titleSize * 0.5);
-        ctx.lineTo(W / 2 + lineW / 2, titleY + titleSize * 0.5);
+        ctx.moveTo(W / 2 - lineW / 2, titleY + titleSize * 0.4);
+        ctx.lineTo(W / 2 + lineW / 2, titleY + titleSize * 0.4);
         ctx.stroke();
       }
 
@@ -409,6 +560,7 @@ export default function Poster() {
   const [selectedStyle, setSelectedStyle] = useState<PosterStyle>("neon_electronic");
   const [selectedPersonStyle, setSelectedPersonStyle] = useState<PersonStyle | "">("");
   const [selectedScene, setSelectedScene] = useState<SceneType | "">("");
+  const [selectedTitleEffect, setSelectedTitleEffect] = useState<TitleEffect | "">("");
   const [selectedTheme, setSelectedTheme] = useState("");
   const [customTheme, setCustomTheme] = useState("");
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
@@ -481,12 +633,13 @@ export default function Poster() {
       return;
     }
     try {
-      const result = await renderTextOnCanvas(generatedImageUrl, posterText, selectedStyle);
+      const effectToUse = selectedTitleEffect || styleToTitleEffect[selectedStyle];
+      const result = await renderTextOnCanvas(generatedImageUrl, posterText, selectedStyle, effectToUse);
       setFinalPosterUrl(result);
     } catch {
       setFinalPosterUrl(generatedImageUrl);
     }
-  }, [generatedImageUrl, posterText, selectedStyle]);
+  }, [generatedImageUrl, posterText, selectedStyle, selectedTitleEffect]);
 
   useEffect(() => {
     composePoster();
@@ -1078,6 +1231,17 @@ export default function Poster() {
                 options={sceneOptions}
                 placeholder="選擇場景（選填）"
               />
+              <div className="mt-4">
+                <h2 className="text-sm font-semibold mb-2" style={{ color: "rgba(255,255,255,0.7)" }}>
+                  標題特效字型
+                </h2>
+                <SelectDropdown
+                  value={selectedTitleEffect}
+                  onChange={(v) => setSelectedTitleEffect(v)}
+                  options={titleEffectOptions}
+                  placeholder={`自動（${titleEffectOptions.find(o => o.id === styleToTitleEffect[selectedStyle])?.label ?? "金光閃耀"}）`}
+                />
+              </div>
               <div className="mt-4">
                 <h2 className="text-sm font-semibold mb-2" style={{ color: "rgba(255,255,255,0.7)" }}>
                   補充說明（選填）
