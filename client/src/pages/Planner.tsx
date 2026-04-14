@@ -37,6 +37,7 @@ export default function Planner() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [result, setResult] = useState("");
   const [copied, setCopied] = useState(false);
+  const [refineInstruction, setRefineInstruction] = useState("");
 
   const generateMutation = trpc.planner.generate.useMutation({
     onSuccess: (data) => {
@@ -47,7 +48,7 @@ export default function Planner() {
     },
   });
 
-  const handleGenerate = () => {
+  const handleGenerate = (extraInstruction?: string, previousDraft?: string) => {
     const eventType =
       selectedEventType === "custom"
         ? customEventType
@@ -58,6 +59,14 @@ export default function Planner() {
       return;
     }
 
+    const mergedSpecial = [
+      specialReq,
+      extraInstruction,
+      previousDraft ? `基於以下原企劃進行修改（保留整體方向，依上方指令調整）：\n${previousDraft}` : "",
+    ]
+      .filter((s) => s && s.trim())
+      .join("\n\n");
+
     setResult("");
     generateMutation.mutate({
       hotel: selectedHotel,
@@ -65,8 +74,16 @@ export default function Planner() {
       duration: duration || undefined,
       budget: budget || undefined,
       targetAudience: targetAudience || undefined,
-      specialRequirements: specialReq || undefined,
+      specialRequirements: mergedSpecial || undefined,
     });
+  };
+
+  const handleRefine = () => {
+    if (!refineInstruction.trim()) {
+      toast.error("請先輸入修改指令");
+      return;
+    }
+    handleGenerate(refineInstruction, result);
   };
 
   const handleCopy = () => {
@@ -310,7 +327,7 @@ export default function Planner() {
 
             {/* 生成按鈕 */}
             <button
-              onClick={handleGenerate}
+              onClick={() => handleGenerate()}
               disabled={!selectedEventType || generateMutation.isPending}
               className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all"
               style={{
@@ -389,7 +406,7 @@ export default function Planner() {
                     下載 .md
                   </button>
                   <button
-                    onClick={handleGenerate}
+                    onClick={() => handleGenerate()}
                     className="flex items-center gap-1.5 px-3 py-1 rounded text-xs transition-all"
                     style={{
                       background: "rgba(255,255,255,0.05)",
@@ -421,8 +438,54 @@ export default function Planner() {
                   </div>
                 </div>
               ) : result ? (
-                <div className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.85)" }}>
-                  <Streamdown>{result}</Streamdown>
+                <div className="space-y-4">
+                  <div className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.85)" }}>
+                    <Streamdown>{result}</Streamdown>
+                  </div>
+                  <div className="p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                    <label className="text-xs block mb-2" style={{ color: "rgba(255,255,255,0.55)" }}>
+                      ✏️ 修改指令（例：預算再壓低、加入直播環節、聚焦會員回流、排程縮短到 3 週）
+                    </label>
+                    <textarea
+                      value={refineInstruction}
+                      onChange={(e) => setRefineInstruction(e.target.value)}
+                      placeholder="輸入微調指令，按『套用指令再生成』"
+                      rows={2}
+                      className="w-full px-3 py-2 rounded-lg text-xs outline-none resize-none"
+                      style={{
+                        background: "rgba(0,0,0,0.3)",
+                        border: "1px solid rgba(255,255,255,0.08)",
+                        color: "rgba(255,255,255,0.85)",
+                      }}
+                    />
+                    <div className="flex gap-2 mt-2">
+                      <button
+                        onClick={handleRefine}
+                        disabled={generateMutation.isPending}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs transition-all disabled:opacity-50"
+                        style={{
+                          background: "linear-gradient(135deg, rgba(56,189,248,0.2), rgba(192,132,252,0.2))",
+                          border: "1px solid rgba(56,189,248,0.35)",
+                          color: "#7dd3fc",
+                        }}
+                      >
+                        <RefreshCw size={12} />
+                        套用指令再生成
+                      </button>
+                      <button
+                        onClick={() => { setRefineInstruction(""); handleGenerate(); }}
+                        disabled={generateMutation.isPending}
+                        className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs transition-all disabled:opacity-50"
+                        style={{
+                          background: "rgba(255,255,255,0.04)",
+                          border: "1px solid rgba(255,255,255,0.1)",
+                          color: "rgba(255,255,255,0.6)",
+                        }}
+                      >
+                        完全重新生成
+                      </button>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center h-full gap-3 text-center">

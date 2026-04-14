@@ -126,6 +126,7 @@ export default function Copywriter() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [result, setResult] = useState("");
   const [copied, setCopied] = useState(false);
+  const [refineInstruction, setRefineInstruction] = useState("");
 
   const generateMutation = trpc.copywriter.generate.useMutation({
     onSuccess: (data) => {
@@ -144,19 +145,34 @@ export default function Copywriter() {
     );
   };
 
-  const handleGenerate = () => {
+  const handleGenerate = (extraInstruction?: string, previousDraft?: string) => {
     if (!selectedType) {
       toast.error("請先選擇文案類型");
       return;
     }
+    const merged = [
+      customNote,
+      extraInstruction,
+      previousDraft ? `基於以下原稿進行修改（保留整體方向，只依上述指令調整）：\n${previousDraft}` : "",
+    ]
+      .filter((s) => s && s.trim())
+      .join("\n\n");
     setResult("");
     generateMutation.mutate({
       type: selectedType,
       hotel: selectedHotel,
       platform: selectedPlatform,
       elements: selectedElements,
-      customNote: customNote || undefined,
+      customNote: merged || undefined,
     });
+  };
+
+  const handleRefine = () => {
+    if (!refineInstruction.trim()) {
+      toast.error("請先輸入修改指令");
+      return;
+    }
+    handleGenerate(refineInstruction, result);
   };
 
   const handleCopy = () => {
@@ -404,7 +420,7 @@ export default function Copywriter() {
 
             {/* 生成按鈕 */}
             <GoldButton
-              onClick={handleGenerate}
+              onClick={() => handleGenerate()}
               disabled={!selectedType}
               loading={generateMutation.isPending}
             >
@@ -443,7 +459,7 @@ export default function Copywriter() {
                     {copied ? "已複製" : "複製"}
                   </button>
                   <button
-                    onClick={handleGenerate}
+                    onClick={() => handleGenerate()}
                     className="flex items-center gap-1.5 px-3 py-1 rounded text-xs transition-all"
                     style={{
                       background: "rgba(255,255,255,0.05)",
@@ -470,11 +486,54 @@ export default function Copywriter() {
                   </p>
                 </div>
               ) : result ? (
-                <div
-                  className="text-sm leading-relaxed"
-                  style={{ color: "rgba(255,255,255,0.85)" }}
-                >
-                  <Streamdown>{result}</Streamdown>
+                <div className="space-y-4">
+                  <div className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.85)" }}>
+                    <Streamdown>{result}</Streamdown>
+                  </div>
+                  <div className="p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                    <label className="text-xs block mb-2" style={{ color: "rgba(255,255,255,0.55)" }}>
+                      ✏️ 修改指令（例：更口語、縮短一半、加上數字說服力、改用 Dcard 語氣）
+                    </label>
+                    <textarea
+                      value={refineInstruction}
+                      onChange={(e) => setRefineInstruction(e.target.value)}
+                      placeholder="輸入微調指令，按『套用指令再生成』"
+                      rows={2}
+                      className="w-full px-3 py-2 rounded-lg text-xs outline-none resize-none"
+                      style={{
+                        background: "rgba(0,0,0,0.3)",
+                        border: "1px solid rgba(255,255,255,0.08)",
+                        color: "rgba(255,255,255,0.85)",
+                      }}
+                    />
+                    <div className="flex gap-2 mt-2">
+                      <button
+                        onClick={handleRefine}
+                        disabled={generateMutation.isPending}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs transition-all disabled:opacity-50"
+                        style={{
+                          background: "linear-gradient(135deg, rgba(240,192,64,0.2), rgba(192,132,252,0.2))",
+                          border: "1px solid rgba(240,192,64,0.35)",
+                          color: "#f0c040",
+                        }}
+                      >
+                        <RefreshCw size={12} />
+                        套用指令再生成
+                      </button>
+                      <button
+                        onClick={() => { setRefineInstruction(""); handleGenerate(); }}
+                        disabled={generateMutation.isPending}
+                        className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs transition-all disabled:opacity-50"
+                        style={{
+                          background: "rgba(255,255,255,0.04)",
+                          border: "1px solid rgba(255,255,255,0.1)",
+                          color: "rgba(255,255,255,0.6)",
+                        }}
+                      >
+                        完全重新生成
+                      </button>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center h-full gap-3 text-center">
