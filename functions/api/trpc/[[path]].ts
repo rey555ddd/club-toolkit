@@ -1218,12 +1218,42 @@ const posterRouter = router({
         : "";
 
       const personCountClause = input.personCount > 1
-        ? `CRITICAL GROUP COUNT — Generate EXACTLY ${input.personCount} Taiwanese women standing together in the same frame (group shot, ensemble poster style). All ${input.personCount} women must follow the ethnicity/age/skin rules above. Vary their outfits (different colors and styles of evening dresses), slightly vary their hairstyles (long straight, long wavy, medium wavy), but keep all within the chosen personal style aesthetic. Arrange them in a visually balanced composition typical of Taiwanese nightclub marketing posters — e.g. standing in a row, slightly offset in depth, or grouped in a V-formation. DO NOT generate a different number of people. Exactly ${input.personCount}.`
+        ? `CRITICAL GROUP COUNT — Generate EXACTLY ${input.personCount} Taiwanese women standing together in the same frame (group shot, ensemble poster style). All ${input.personCount} women must follow the ethnicity/age/skin rules above. Arrange them in a visually balanced composition typical of Taiwanese nightclub marketing posters — e.g. standing in a row, slightly offset in depth, or grouped in a V-formation. DO NOT generate a different number of people. Exactly ${input.personCount}.
+
+CRITICAL FACIAL DIVERSITY — all ${input.personCount} women MUST have clearly DIFFERENT faces and appearances. They must look like ${input.personCount} distinct real individuals, NOT sisters, NOT twins, NOT the same face copy-pasted. Vary significantly:
+- FACE SHAPE: mix of oval, heart-shaped, round, square jaw, V-line — each person gets a different shape
+- EYE shape & size: some with larger almond eyes, some narrower, some with double eyelid, some monolid, different brow shapes
+- NOSE: different nose bridges (some higher, some softer), different nose tip shapes
+- LIPS: some fuller, some thinner, some with cupid's bow, different lip color tones
+- FACIAL STRUCTURE: different cheekbone prominence, different chin shapes
+- HAIRSTYLE: each person gets a distinct hairstyle — long straight black, long wavy with caramel highlights, medium wavy bob, shoulder-length with bangs, half-up, sleek ponytail, etc. NO two women share the same hairstyle
+- OUTFIT: each wears a DIFFERENT color and style of dress (do not dress them identically)
+- HEIGHT & BUILD: slight variation in height and frame
+- SKIN TONE: all fair-to-light, but subtle micro-variation (some slightly more porcelain, some slightly warmer ivory)
+- EXPRESSION: vary the smiles and expressions — some with open smile, some smirk, some gentle closed smile, some playful
+
+The goal: each woman looks like a separate real Taiwanese individual you could recognize by her unique face, NOT an AI-generated clone family.`
         : "";
 
       const framingClause = "CRITICAL FRAMING RULE — ALL faces must be FULLY VISIBLE within the frame. NEVER crop, cut off, or partially hide any face at the edges of the poster. Every person's complete face (forehead, eyes, nose, mouth, chin) must be entirely inside the composition. Leave adequate margin between each face and the edge of the image. If necessary, zoom out or rearrange the composition to include everyone's full face. Face cropping is strictly forbidden.";
 
-      const naturalismClause = "NATURAL REALISM — avoid the over-polished AI look. The skin must have REAL texture: visible pores, slight imperfections, subtle blemishes, natural peach fuzz, real sheen rather than plastic smoothness. Skin should NOT look airbrushed, filtered, or CGI. Include tiny natural asymmetries in the face (slightly uneven eyes/brows/smile) like real humans have. Lighting must look like real nightclub/studio photography — soft directional light with visible shadow gradation on the face and neck, NOT the flat even 'beauty mode' glow. Hair should have individual strands, slight flyaways, not a helmet of perfection. Expression should feel candid and natural, not frozen or doll-like. Think real Taiwanese influencer IG photos and real hostess candid shots — slightly imperfect, clearly human, photographable in real life. The goal: 80% polished commercial quality, 20% raw authenticity.";
+      const naturalismClause = `NATURAL REALISM — this is the MOST IMPORTANT quality requirement. The result must NOT look AI-generated, over-polished, airbrushed, or doll-like. Real humans have:
+- VISIBLE skin texture: pores, fine lines, subtle acne scars, faint freckles, peach fuzz, slight redness around nose/cheeks, minor blemishes. NO plastic/CGI smooth skin allowed.
+- NATURAL asymmetry: eyes slightly uneven size, eyebrows not identical shape, smile slightly tilted, one side of face different from the other. Real faces are never symmetrical.
+- REAL teeth: not Photoshop-white; slight natural off-white, tiny gaps or overlap, slight imperfections. No 'toothpaste ad' teeth.
+- REAL hair: individual strands visible, flyaways, slightly messy edges, roots showing if dyed, not a 'helmet of perfection'.
+- REAL lighting: visible shadow gradation, catchlights in eyes from actual light sources, specular highlights on skin from sweat/oil, NOT flat beauty-mode glow.
+
+${input.personCount > 1 ? `CHARACTER DIVERSITY OF BEAUTY — with ${input.personCount} people in frame, DO NOT make all of them supermodel-perfect. Make 1-2 of them noticeably LESS 'perfect' than the rest — these could be:
+- A girl-next-door type with simpler makeup and more relatable features
+- Someone with slightly chubbier cheeks or a less sculpted face
+- Someone with smaller eyes or a wider nose
+- Someone whose pose/expression is a bit more casual, less posed
+- Someone with visible skin texture imperfections (mild acne, dark circles, dull skin patches)
+- Someone who's cute rather than stunning, sweet rather than glamorous
+This MIX of beauty levels is what makes Taiwanese hostess group photos feel REAL — not every girl is a 10/10 model. Think of actual 八大 team photos: there's always a mix of looks, builds, and beauty levels. The group looks like real coworkers, not a cloned supermodel army.` : `Include real human imperfections — this woman should look like a genuine Taiwanese influencer or hostess, not a filtered Instagram avatar. Small flaws (a tiny blemish, slight asymmetry, relatable expression) increase believability.`}
+
+The target is: people viewing the poster should think 'these are real Taiwanese hostesses photographed at the venue', NOT 'this is AI-generated'. Think real Taiwan IG candid shots and real team group photos — 70% polished, 30% raw reality.`;
 
       const referencePosterClause = input.referencePosterUrl
         ? "REFERENCE POSTER — the user has uploaded an existing poster as reference. Study its overall composition, color palette, mood, lighting style, decorative elements, and layout. Generate the new poster with a strong visual resemblance to the reference poster's design language (same typography vibe, similar background treatment, similar dressing style and pose energy), while keeping ALL the Taiwan ethnicity/age/skin rules."
