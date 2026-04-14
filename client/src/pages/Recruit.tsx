@@ -4,7 +4,6 @@ import { Streamdown } from "streamdown";
 import {
   UserPlus,
   FileText,
-  Image as ImageIcon,
   Users,
   RefreshCw,
   Copy,
@@ -16,19 +15,21 @@ import {
   Gift,
   HandHeart,
   Heart,
-  Download,
   MessageCircle,
   X,
+  Upload,
+  Trash2,
+  FileUp,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { AIChatBox, type Message } from "@/components/AIChatBox";
 
-type Tab = "copy" | "poster" | "referral";
+type Tab = "copy" | "referral" | "library";
+type FileCategory = "poster" | "hostess_photo" | "planner" | "copy_sample";
 type Channel = "dcard" | "ig_story" | "ig_post" | "threads" | "line_group";
 type Position = "hostess" | "foh" | "control" | "wardrobe";
 type PainPoint = "secret" | "no_photo" | "base_salary" | "flexible" | "referral" | "safe" | "sister";
 type Hotel = "chinatown" | "dihao" | "both";
-type RecruitPosterMode = "party" | "workplace" | "direct";
 
 const channelOptions: { id: Channel; label: string; desc: string }[] = [
   { id: "dcard", label: "Dcard 徵才", desc: "學姊爆料口吻、300-500 字" },
@@ -61,12 +62,6 @@ const hotelOptions: { id: Hotel; label: string }[] = [
   { id: "dihao", label: "帝豪" },
 ];
 
-const posterModeOptions: { id: RecruitPosterMode; label: string; desc: string }[] = [
-  { id: "workplace", label: "溫馨工作環境", desc: "1-2 位氣質小姐，明亮更衣室／包廂，感覺像正常工作" },
-  { id: "direct", label: "高薪直白", desc: "大大的薪資數字、試坐保障字樣，素雅底圖" },
-  { id: "party", label: "派對氣氛", desc: "熱鬧但不過度性感，展示正向團隊氣氛" },
-];
-
 export default function Recruit() {
   const [tab, setTab] = useState<Tab>("copy");
 
@@ -83,16 +78,16 @@ export default function Recruit() {
           </div>
           <div className="gold-divider max-w-[64px] mx-auto mb-4" />
           <p className="text-[14px] font-light tracking-wide" style={{ color: "rgba(255,255,255,0.55)" }}>
-            三位一體解決增員問題 — 痛點反轉文案 · 徵才海報 · 介紹制計算
+            兩大增員武器 — 痛點反轉文案 · 介紹制計算
           </p>
         </div>
 
         {/* Tabs */}
-        <div className="flex justify-center gap-2 mb-6">
+        <div className="flex justify-center gap-2 mb-6 flex-wrap">
           {[
             { id: "copy" as Tab, label: "徵才文案", icon: FileText, color: "#f0c040" },
-            { id: "poster" as Tab, label: "徵才海報", icon: ImageIcon, color: "#c084fc" },
             { id: "referral" as Tab, label: "介紹制計算", icon: Users, color: "#22c55e" },
+            { id: "library" as Tab, label: "檔案上傳區", icon: Upload, color: "#38bdf8" },
           ].map((t) => (
             <button
               key={t.id}
@@ -111,8 +106,8 @@ export default function Recruit() {
         </div>
 
         {tab === "copy" && <CopyTab />}
-        {tab === "poster" && <PosterTab />}
         {tab === "referral" && <ReferralTab />}
+        {tab === "library" && <LibraryTab />}
       </div>
 
       <RecruitChatAssistant />
@@ -404,160 +399,6 @@ function CopyTab() {
   );
 }
 
-// ────────────────────────────────────────────────────
-// Tab 2: 徵才海報（簡化版，呼叫 poster.generate）
-// ────────────────────────────────────────────────────
-function PosterTab() {
-  const [mode, setMode] = useState<RecruitPosterMode>("workplace");
-  const [hotel, setHotel] = useState<Hotel>("both");
-  const [salary, setSalary] = useState("");
-  const [contact, setContact] = useState("");
-  const [customNote, setCustomNote] = useState("");
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-
-  const mut = trpc.poster.generate.useMutation({
-    onSuccess: (data) => setImageUrl(data.imageBase64 ?? null),
-    onError: (e) => toast.error("生成失敗：" + e.message),
-  });
-
-  const modeDescriptions: Record<RecruitPosterMode, string> = {
-    workplace: "Recruitment-focused poster, bright clean warmly-lit interior (dressing room / lounge / hallway), 1-2 Taiwanese women with elegant natural vibe (NOT overtly sexy, NOT party glam, NOT heavy nightclub makeup — more like a classy workplace ambassador photo), reassuring professional atmosphere suitable for recruiting new hostesses.",
-    direct: "Recruitment poster with MINIMAL imagery (optional 1 small tasteful portrait in corner), MAIN VISUAL is LARGE BOLD TYPOGRAPHY of salary/bonus numbers and job guarantees like '試坐底薪保障' '介紹獎金 $15,000'. Clean elegant gold-on-black background. Feels like a premium job posting, not a party ad.",
-    party: "Recruitment poster showing a positive team atmosphere — 2-3 Taiwanese women together in a friendly upbeat pose (NOT sexually provocative, focus on team friendship and fun work vibe), warm nightclub lighting but wholesome feel. Goal: showcase good team culture to attract new members.",
-  };
-
-  const handleGen = () => {
-    const detailsLines = [
-      salary ? `薪資訴求：${salary}` : "",
-      contact ? `聯絡方式：${contact}（請放在海報上顯眼位置）` : "",
-      customNote,
-    ].filter(Boolean).join("；");
-
-    const customPrompt = `${modeDescriptions[mode]}
-
-IMPORTANT — this is a RECRUITMENT poster targeting potential NEW hostesses, NOT a marketing poster for customers. The tone must be reassuring, professional, tasteful, approachable. Avoid provocative / heavy-sexy / fetishized imagery that would scare away job applicants.
-
-Leave substantial clean blank areas at top and bottom for adding text like: job title, guaranteed base pay, referral bonus, contact LINE ID. Design should look like a job ad, not a night event ad.
-
-${detailsLines ? `Additional details: ${detailsLines}` : ""}`;
-
-    setImageUrl(null);
-    mut.mutate({
-      hotel,
-      style: mode === "direct" ? "luxury_gold" : "modern_minimal",
-      theme: mode === "workplace" ? "徵才 - 溫馨工作環境" : mode === "direct" ? "徵才 - 高薪直白" : "徵才 - 團隊派對感",
-      features: [],
-      effects: [],
-      hasUploadedPhoto: false,
-      personCount: mode === "direct" ? 1 : mode === "workplace" ? 2 : 3,
-      personStyle: mode === "workplace" ? "graceful" : mode === "party" ? "sweet" : undefined,
-      outfitStyle: mode === "party" ? "sweet_cutie" : undefined,
-      excludeText: true,
-      customPrompt,
-    });
-  };
-
-  const download = () => {
-    if (!imageUrl) return;
-    const a = document.createElement("a");
-    a.href = imageUrl;
-    a.download = `recruit-poster-${Date.now()}.png`;
-    a.click();
-  };
-
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
-      <div className="lg:col-span-2 space-y-5">
-        <Section title="海報風格">
-          <div className="grid grid-cols-1 gap-2">
-            {posterModeOptions.map((m) => (
-              <Choice key={m.id} active={mode === m.id} onClick={() => setMode(m.id)} title={m.label} desc={m.desc} color="#c084fc" />
-            ))}
-          </div>
-        </Section>
-
-        <Section title="酒店">
-          <div className="flex gap-2">
-            {hotelOptions.map((h) => (
-              <button
-                key={h.id}
-                onClick={() => setHotel(h.id)}
-                className="flex-1 py-2 rounded-lg text-xs transition-all"
-                style={{
-                  background: hotel === h.id ? "rgba(192,132,252,0.15)" : "rgba(255,255,255,0.04)",
-                  border: `1px solid ${hotel === h.id ? "rgba(192,132,252,0.4)" : "rgba(255,255,255,0.08)"}`,
-                  color: hotel === h.id ? "#c084fc" : "rgba(255,255,255,0.6)",
-                }}
-              >
-                {h.label}
-              </button>
-            ))}
-          </div>
-        </Section>
-
-        <Section title="薪資 / 獎金文字（選填）">
-          <input
-            value={salary}
-            onChange={(e) => setSalary(e.target.value)}
-            placeholder="例：試坐底薪 $1,500 / 日"
-            className="w-full px-3 py-2.5 rounded-lg text-sm outline-none"
-            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(192,132,252,0.2)", color: "rgba(255,255,255,0.85)" }}
-          />
-        </Section>
-
-        <Section title="聯絡窗口（選填）">
-          <input
-            value={contact}
-            onChange={(e) => setContact(e.target.value)}
-            placeholder="例：LINE @abc123"
-            className="w-full px-3 py-2.5 rounded-lg text-sm outline-none"
-            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(192,132,252,0.2)", color: "rgba(255,255,255,0.85)" }}
-          />
-        </Section>
-
-        <Section title="補充說明（選填）">
-          <textarea
-            value={customNote}
-            onChange={(e) => setCustomNote(e.target.value)}
-            placeholder="例：背景用咖啡色調 / 想要姐妹感 / 女生要看起來像大學生"
-            rows={2}
-            className="w-full px-3 py-2.5 rounded-lg text-sm outline-none resize-none"
-            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(192,132,252,0.2)", color: "rgba(255,255,255,0.85)" }}
-          />
-        </Section>
-
-        <button
-          onClick={handleGen}
-          disabled={mut.isPending}
-          className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-50"
-          style={{ background: "linear-gradient(135deg, #c084fc, #a855f7)", color: "#fff" }}
-        >
-          {mut.isPending ? <RefreshCw size={14} className="animate-spin" /> : <ImageIcon size={14} />}
-          {mut.isPending ? "生成中..." : "生成徵才海報"}
-        </button>
-
-        <p className="text-[11px] leading-relaxed p-3 rounded-lg" style={{ color: "rgba(252,211,77,0.8)", background: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.25)" }}>
-          ⚠️ AI 海報為底圖參考，正式徵才海報建議由美編加上聯絡資訊、試坐保障等細節
-        </p>
-      </div>
-
-      <div className="lg:col-span-3 rounded-xl overflow-hidden flex flex-col items-center p-6" style={{ background: "oklch(0.10 0.015 260)", border: "1px solid rgba(192,132,252,0.15)", minHeight: "500px" }}>
-        {mut.isPending ? (
-          <LoadingState text="AI 正在生成徵才海報...（約 20-40 秒）" />
-        ) : imageUrl ? (
-          <div className="w-full flex flex-col items-center gap-4">
-            <img src={imageUrl} alt="徵才海報" className="w-full max-w-xs rounded-xl" style={{ border: "1px solid rgba(192,132,252,0.25)" }} />
-            <button onClick={download} className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs" style={{ background: "rgba(192,132,252,0.12)", border: "1px solid rgba(192,132,252,0.3)", color: "#c084fc" }}>
-              <Download size={13} /> 下載海報
-            </button>
-          </div>
-        ) : (
-          <EmptyState icon={ImageIcon} text="選好風格後點生成徵才海報" color="rgba(192,132,252,0.2)" />
-        )}
-      </div>
-    </div>
-  );
-}
 
 // ────────────────────────────────────────────────────
 // Tab 3: 介紹制計算
@@ -791,6 +632,269 @@ function RefinementBox({ value, onChange, onApply, onRegen, isPending, color, pl
           完全重新生成
         </button>
       </div>
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────
+// Tab 3: 檔案上傳區（素材庫）
+// ────────────────────────────────────────────────────
+type LibraryItem = {
+  id: string;
+  category: FileCategory;
+  name: string;
+  kind: "image" | "text";
+  data: string; // base64 dataURL for image, plain text for text
+  size: number;
+  createdAt: number;
+};
+
+const CATEGORIES: { id: FileCategory; label: string; desc: string; kind: "image" | "text"; color: string }[] = [
+  { id: "poster", label: "過去的海報", desc: "上傳過去做過的活動／徵才海報，當風格參考", kind: "image", color: "#c084fc" },
+  { id: "hostess_photo", label: "小姐照片", desc: "員工形象照，未來生成人物時可參考", kind: "image", color: "#ec4899" },
+  { id: "planner", label: "活動企劃", desc: "過去寫過的活動企劃書，AI 可學你的風格與 SOP", kind: "text", color: "#38bdf8" },
+  { id: "copy_sample", label: "文案範本", desc: "過去有效的文案，AI 模仿語氣與套路", kind: "text", color: "#f0c040" },
+];
+
+const LS_KEY = "club-toolkit-library";
+
+function loadLibrary(): LibraryItem[] {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return [];
+    return JSON.parse(raw);
+  } catch {
+    return [];
+  }
+}
+
+function saveLibrary(items: LibraryItem[]) {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(items));
+  } catch (e) {
+    toast.error("儲存失敗（可能超出瀏覽器容量限制）：" + (e instanceof Error ? e.message : ""));
+  }
+}
+
+function LibraryTab() {
+  const [category, setCategory] = useState<FileCategory>("poster");
+  const [items, setItems] = useState<LibraryItem[]>(() => loadLibrary());
+  const [textInput, setTextInput] = useState("");
+  const [textName, setTextName] = useState("");
+
+  const activeCat = CATEGORIES.find((c) => c.id === category)!;
+  const filteredItems = items.filter((i) => i.category === category);
+
+  const persist = (next: LibraryItem[]) => {
+    setItems(next);
+    saveLibrary(next);
+  };
+
+  const handleFileUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const newOnes: LibraryItem[] = [];
+    for (const file of Array.from(files)) {
+      if (file.size > 3 * 1024 * 1024) {
+        toast.error(`${file.name} 超過 3MB，請壓縮後再上傳`);
+        continue;
+      }
+      const data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject();
+        reader.readAsDataURL(file);
+      });
+      newOnes.push({
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        category,
+        name: file.name,
+        kind: "image",
+        data,
+        size: file.size,
+        createdAt: Date.now(),
+      });
+    }
+    if (newOnes.length > 0) {
+      persist([...items, ...newOnes]);
+      toast.success(`已上傳 ${newOnes.length} 個檔案`);
+    }
+  };
+
+  const handleTextSubmit = () => {
+    if (!textInput.trim()) return toast.error("請先輸入內容");
+    const item: LibraryItem = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      category,
+      name: textName.trim() || `${activeCat.label} ${new Date().toLocaleDateString()}`,
+      kind: "text",
+      data: textInput.trim(),
+      size: textInput.length,
+      createdAt: Date.now(),
+    };
+    persist([...items, item]);
+    setTextInput("");
+    setTextName("");
+    toast.success("已儲存");
+  };
+
+  const handleDelete = (id: string) => {
+    persist(items.filter((i) => i.id !== id));
+    toast.success("已刪除");
+  };
+
+  return (
+    <div className="space-y-5">
+      {/* 說明橫幅 */}
+      <div className="p-4 rounded-xl" style={{ background: "rgba(56,189,248,0.08)", border: "1px solid rgba(56,189,248,0.25)" }}>
+        <p className="text-[13px] leading-relaxed" style={{ color: "rgba(125,211,252,0.9)" }}>
+          💡 上傳過去的海報／小姐照片／企劃／文案當作<strong>素材庫</strong>，AI 未來生成時會參考這些資料，讓輸出更符合店裡風格與過往做過的內容。
+          <br />
+          <span className="text-[11px] opacity-80">目前檔案儲存在你的瀏覽器本地，同一台裝置可跨頁共用。單檔上限 3MB。</span>
+        </p>
+      </div>
+
+      {/* 類別切換 */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {CATEGORIES.map((c) => {
+          const count = items.filter((i) => i.category === c.id).length;
+          const active = category === c.id;
+          return (
+            <button
+              key={c.id}
+              onClick={() => setCategory(c.id)}
+              className="p-3 rounded-xl text-left transition-all"
+              style={{
+                background: active ? `${c.color}18` : "rgba(255,255,255,0.03)",
+                border: `1px solid ${active ? c.color + "55" : "rgba(255,255,255,0.08)"}`,
+              }}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm font-semibold" style={{ color: active ? c.color : "rgba(255,255,255,0.7)" }}>{c.label}</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: `${c.color}25`, color: c.color }}>{count}</span>
+              </div>
+              <p className="text-[10px] leading-relaxed" style={{ color: "rgba(255,255,255,0.4)" }}>{c.desc}</p>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* 上傳區 */}
+      {activeCat.kind === "image" ? (
+        <div>
+          <label className="block cursor-pointer">
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                handleFileUpload(e.target.files);
+                e.target.value = "";
+              }}
+            />
+            <div
+              className="p-8 rounded-xl text-center transition-all hover:bg-white/5"
+              style={{ background: "rgba(255,255,255,0.03)", border: `1px dashed ${activeCat.color}55` }}
+            >
+              <FileUp size={32} className="mx-auto mb-2" style={{ color: activeCat.color }} />
+              <p className="text-sm font-semibold" style={{ color: activeCat.color }}>點擊上傳 {activeCat.label}</p>
+              <p className="text-[11px] mt-1" style={{ color: "rgba(255,255,255,0.4)" }}>可多選、jpg/png/webp、單檔 3MB 以內</p>
+            </div>
+          </label>
+        </div>
+      ) : (
+        <div className="p-4 rounded-xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+          <label className="text-xs block mb-2" style={{ color: "rgba(255,255,255,0.6)" }}>名稱（選填）</label>
+          <input
+            value={textName}
+            onChange={(e) => setTextName(e.target.value)}
+            placeholder={`例如：2025 聖誕派對${activeCat.label}`}
+            className="w-full px-3 py-2 rounded-lg text-sm outline-none mb-3"
+            style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.85)" }}
+          />
+          <label className="text-xs block mb-2" style={{ color: "rgba(255,255,255,0.6)" }}>內容</label>
+          <textarea
+            value={textInput}
+            onChange={(e) => setTextInput(e.target.value)}
+            placeholder={activeCat.id === "planner" ? "貼上過去的活動企劃書全文..." : "貼上過去有效的文案..."}
+            rows={8}
+            className="w-full px-3 py-2 rounded-lg text-sm outline-none resize-y"
+            style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.85)" }}
+          />
+          <button
+            onClick={handleTextSubmit}
+            className="mt-3 w-full py-2.5 rounded-lg text-sm font-semibold transition-all"
+            style={{ background: `linear-gradient(135deg, ${activeCat.color}, ${activeCat.color}cc)`, color: "#0a0a0a" }}
+          >
+            <Upload size={14} className="inline mr-1.5" />
+            儲存到素材庫
+          </button>
+        </div>
+      )}
+
+      {/* 檔案清單 */}
+      <div>
+        <h4 className="text-sm font-semibold mb-3" style={{ color: "rgba(255,255,255,0.7)" }}>
+          已儲存 {filteredItems.length} 份 {activeCat.label}
+        </h4>
+        {filteredItems.length === 0 ? (
+          <div className="p-8 rounded-xl text-center" style={{ background: "rgba(255,255,255,0.02)", border: "1px dashed rgba(255,255,255,0.08)" }}>
+            <p className="text-sm" style={{ color: "rgba(255,255,255,0.3)" }}>尚無資料，上傳後會列在這裡</p>
+          </div>
+        ) : (
+          <div className={activeCat.kind === "image" ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3" : "space-y-3"}>
+            {filteredItems.slice().reverse().map((item) => (
+              <LibraryCard key={item.id} item={item} color={activeCat.color} onDelete={() => handleDelete(item.id)} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function LibraryCard({ item, color, onDelete }: { item: LibraryItem; color: string; onDelete: () => void }) {
+  const [expanded, setExpanded] = useState(false);
+  if (item.kind === "image") {
+    return (
+      <div className="relative group rounded-xl overflow-hidden" style={{ border: `1px solid ${color}30` }}>
+        <img src={item.data} alt={item.name} className="w-full aspect-[3/4] object-cover" />
+        <div className="absolute inset-x-0 bottom-0 p-2 flex items-center justify-between" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85), transparent)" }}>
+          <span className="text-[10px] truncate flex-1" style={{ color: "rgba(255,255,255,0.8)" }}>{item.name}</span>
+          <button
+            onClick={onDelete}
+            className="p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+            style={{ background: "rgba(239,68,68,0.2)", color: "#fca5a5" }}
+          >
+            <Trash2 size={12} />
+          </button>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${color}30` }}>
+      <div className="flex items-start justify-between gap-2 mb-2">
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium truncate" style={{ color: "rgba(255,255,255,0.85)" }}>{item.name}</p>
+          <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.4)" }}>
+            {new Date(item.createdAt).toLocaleDateString()} · {item.size} 字
+          </p>
+        </div>
+        <button onClick={onDelete} className="p-1.5 rounded-lg transition-all hover:bg-red-500/10" style={{ color: "rgba(255,100,100,0.7)" }}>
+          <Trash2 size={13} />
+        </button>
+      </div>
+      <div
+        className="text-[12px] leading-relaxed whitespace-pre-wrap cursor-pointer"
+        style={{ color: "rgba(255,255,255,0.6)", maxHeight: expanded ? "none" : "64px", overflow: "hidden" }}
+        onClick={() => setExpanded(!expanded)}
+      >
+        {item.data}
+      </div>
+      {item.data.length > 100 && (
+        <button onClick={() => setExpanded(!expanded)} className="mt-2 text-[11px]" style={{ color }}>{expanded ? "收合" : "展開全文"}</button>
+      )}
     </div>
   );
 }
