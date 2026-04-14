@@ -1211,7 +1211,22 @@ const posterRouter = router({
       const personDesc = input.personStyle ? personStyleMap[input.personStyle] : "a Taiwanese female hostess, East Asian (Han Chinese / Taiwanese) ethnicity, elegant 網美 (Taiwanese influencer) aesthetic, long black or dark brown hair, fair to light olive skin, almond-shaped eyes, defined lashes, glossy lips, wearing a sophisticated evening gown, Taiwan nightlife hostess look, genuine warm smile";
       const personDescFinal = outfitDesc ? `${personDesc}, specifically ${outfitDesc}` : personDesc;
 
-      const ethnicLock = "STRICT REQUIREMENT — the person MUST be a Taiwanese woman of East Asian (Han Chinese / Taiwanese) ethnicity, AGE 21 to 25 years old (young adult, fresh youthful appearance, NOT middle-aged), FAIR to LIGHT skin (porcelain or light ivory tone, bright and luminous, NOT tanned, NOT dark, NOT olive-dark), resembling real young Taiwanese female influencers and 網美. DO NOT generate Western, European, Caucasian, South Asian, African, Japanese, Korean, or mixed-heritage appearances. DO NOT generate anyone older than 25 or with darker/tanned skin. HAIR COLOR must be clearly Asian/Taiwanese — ONLY black, dark brown, dark chocolate brown, warm brown, or subtle caramel/chestnut highlights on a dark base are allowed. STRICTLY FORBIDDEN hair colors: blonde, platinum, silver, white, grey, ash, red-orange, or any obviously bleached/Western hair color. Facial features must be unmistakably East Asian — NO high-bridged noses, deep-set eyes, sharp Western angular features, or Caucasian bone structure. Makeup and styling must follow current Taiwan nightlife fashion trends (網美 / 辣妹 aesthetic). This is a non-negotiable requirement.";
+      const ethnicLock = `STRICT REQUIREMENT — ALL women in this image MUST be Taiwanese (East Asian / Han Chinese), age 21-25, fair to light skin. NO EXCEPTIONS for any person in the frame.
+
+CRITICAL — this rule applies INDIVIDUALLY to EVERY single woman. Check each face before finalizing: if ANY face could be mistaken for Western, European, Caucasian, Eurasian mixed-race, Russian, Eastern European, Southeast Asian (Thai/Filipino/Vietnamese), African, Indian, or any non-Han-Chinese ethnicity — REJECT and regenerate that face. Zero foreign faces allowed.
+
+EAST ASIAN FACIAL FEATURES REQUIRED for every woman:
+- Flatter facial profile (NOT high European nose bridge, NOT deep-set Caucasian eyes)
+- Typical East Asian eye shape: almond with mild epicanthic fold, NOT deep-set round Western eyes
+- Softer, rounder facial bone structure (NOT sharp angular Western cheekbones/jawline)
+- Nose: gentle low-to-medium bridge with soft tip, NOT high sharp Western nose
+- Lip shape: Asian lip proportions, NOT overly plump Western lips
+
+HAIR: only black / dark brown / dark chocolate / warm brown / subtle caramel highlights on dark base. STRICTLY FORBIDDEN: blonde, platinum, silver, white, grey, ash, red-orange, or any obviously bleached Western hair color. Even one blonde/platinum person ruins the entire image.
+
+Skin: porcelain or light ivory tone, NOT tanned, NOT dark, NOT olive-dark.
+
+This is non-negotiable. Think real Taiwanese influencers like 愛瑞絲、吳宜樺、邵庭, real 八大 hostesses in Taipei/Taoyuan clubs — NOT Victoria's Secret models, NOT K-pop idols, NOT Japanese gravure models. Pure Taiwanese face.`;
 
       const referenceVariationClause = (input.hasUploadedPhoto && input.uploadedPhotoUrl)
         ? "IMPORTANT — use the uploaded reference photo only as STYLE / VIBE / POSE inspiration. Generate a DIFFERENT Taiwanese woman who looks similar to the reference but is clearly a different individual (different face, slightly different hairstyle, similar overall mood and aesthetic). Do NOT copy the reference face exactly. The new person still must follow all ethnic and age rules above."
@@ -1270,12 +1285,18 @@ ${input.personCount > 1 ? `CHARACTER DIVERSITY OF BEAUTY — with ${input.person
 - Plain girl-next-door features, 6-7/10 attractiveness (NOT 9-10/10)
 - Smaller or narrower eyes, wider/flatter nose, less defined cheekbones
 - Thinner or less plump lips
-- Simpler/lighter makeup (less dramatic eyeliner, more natural lip color)
 - Visible skin texture: mild acne, dark under-eye circles, dull patches, enlarged pores
 - More relaxed/casual/awkward body posture (not a model-like pose)
-- Looks like 'the hostess you'd actually meet at a mid-tier 八大 venue', NOT an IG superstar
 
-This is CRITICAL — the mix of 1-2 'normal girls' next to the stunning ones is what makes real Taiwanese hostess group photos CREDIBLE. A frame full of only 10/10 beauties screams 'AI-generated fake'. Real 八大 team photos ALWAYS have variety in looks. Do not skip this rule.` : `Include real human imperfections — small flaws (tiny blemish, slight asymmetry, relatable expression) increase believability.`}
+CRITICAL — the ORDINARY ones MUST STILL have FULL nightclub 八大 風塵 makeup (they are working hostesses, not off-duty girls):
+- Heavy defined eye makeup (smoky eyeshadow, thick eyeliner, false lashes or strong feather lashes)
+- Bold lip color (deep red / mauve / glossy pink — NOT bare natural lips)
+- Full contour, nose shadow, blush
+- Styled hair (not plain / loose)
+- Their face may be ordinary but their MAKEUP is full-on 八大 nightlife level
+The look: 'ordinary-featured girl with heavy nightclub makeup on' — this is the authentic Taiwanese 八大 vibe. Plain face + full hostess glam = real hostess energy.
+
+A frame full of only 10/10 beauties screams 'AI-generated fake'. Real 八大 team photos ALWAYS have variety in looks — but ALL with heavy makeup. Do not skip this rule.` : `Include real human imperfections — small flaws (tiny blemish, slight asymmetry, relatable expression) increase believability. Keep full 八大 nightclub makeup regardless.`}
 
 BODY STANDARD — ALL women in this shot, however imperfect their face, must have a SLIM / SLENDER body. Nightclub hostesses MUST be slim. NO:
 - No chubby, fat, or overweight women
