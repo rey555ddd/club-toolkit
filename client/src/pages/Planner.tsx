@@ -96,19 +96,18 @@ export default function Planner() {
     <div className="min-h-screen pt-20 pb-16" style={{ background: "oklch(0.08 0.01 260)" }}>
       <div className="container mx-auto px-4 lg:px-8 max-w-5xl">
         {/* 頁面標題 */}
-        <div className="pt-8 pb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div
-              className="p-2 rounded-lg"
-              style={{ background: "rgba(56,189,248,0.12)", border: "1px solid rgba(56,189,248,0.25)" }}
-            >
-              <CalendarDays size={20} style={{ color: "#38bdf8" }} />
-            </div>
-            <h1 className="text-2xl font-bold" style={{ color: "#f5f0e8" }}>
+        <div className="pt-10 pb-8 text-center animate-fade-up">
+          <p className="font-brand-en text-[10px] sm:text-xs mb-2" style={{ color: "rgba(56,189,248,0.7)" }}>
+            Event Planner
+          </p>
+          <div className="flex items-center justify-center gap-3 mb-3">
+            <CalendarDays size={22} style={{ color: "#38bdf8" }} />
+            <h1 className="font-display text-3xl sm:text-4xl text-gold-metal">
               活動企劃師
             </h1>
           </div>
-          <p className="text-sm ml-11" style={{ color: "rgba(255,255,255,0.45)" }}>
+          <div className="gold-divider max-w-[64px] mx-auto mb-4" />
+          <p className="text-[14px] font-light tracking-wide" style={{ color: "rgba(255,255,255,0.55)" }}>
             AI 幫你規劃完整的酒店促銷活動，含文案、排程、Call 客策略
           </p>
         </div>

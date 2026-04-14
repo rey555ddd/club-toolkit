@@ -804,11 +804,14 @@ export default function Poster() {
             >
               <Image size={20} style={{ color: "#c084fc" }} />
             </div>
-            <h1 className="text-2xl font-bold" style={{ color: "#f5f0e8" }}>
+            <h1 className="font-display text-3xl sm:text-4xl text-gold-metal">
               女神海報生成器
             </h1>
           </div>
-          <p className="text-sm ml-11" style={{ color: "rgba(255,255,255,0.45)" }}>
+          <p className="text-sm ml-11 font-brand-en" style={{ color: "rgba(192,132,252,0.7)" }}>
+            AI Goddess Poster Generator
+          </p>
+          <p className="text-[14px] ml-11 mt-1 font-light tracking-wide" style={{ color: "rgba(255,255,255,0.55)" }}>
             AI 生成台灣女神人物 + 夜店場景底圖，供美編排版使用
           </p>
         </div>

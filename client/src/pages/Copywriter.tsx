@@ -175,19 +175,18 @@ export default function Copywriter() {
     >
       <div className="container mx-auto px-4 lg:px-8 max-w-4xl">
         {/* 頁面標題 */}
-        <div className="pt-8 pb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div
-              className="p-2 rounded-lg"
-              style={{ background: "rgba(240,192,64,0.12)", border: "1px solid rgba(240,192,64,0.25)" }}
-            >
-              <FileText size={20} style={{ color: "#f0c040" }} />
-            </div>
-            <h1 className="text-2xl font-bold" style={{ color: "#f5f0e8" }}>
+        <div className="pt-10 pb-8 text-center animate-fade-up">
+          <p className="font-brand-en text-[10px] sm:text-xs mb-2" style={{ color: "rgba(240,192,64,0.7)" }}>
+            Copywriting Studio
+          </p>
+          <div className="flex items-center justify-center gap-3 mb-3">
+            <FileText size={22} style={{ color: "#f0c040" }} />
+            <h1 className="font-display text-3xl sm:text-4xl text-gold-metal">
               文案產生器
             </h1>
           </div>
-          <p className="text-sm ml-11" style={{ color: "rgba(255,255,255,0.45)" }}>
+          <div className="gold-divider max-w-[64px] mx-auto mb-4" />
+          <p className="text-[14px] font-light tracking-wide" style={{ color: "rgba(255,255,255,0.55)" }}>
             選擇文案類型，AI 幫你寫出接地氣的酒店業文案
           </p>
         </div>
