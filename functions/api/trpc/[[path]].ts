@@ -1237,7 +1237,29 @@ The goal: each woman looks like a separate real Taiwanese individual you could r
 
       const framingClause = "CRITICAL FRAMING RULE — ALL faces must be FULLY VISIBLE within the frame. NEVER crop, cut off, or partially hide any face at the edges of the poster. Every person's complete face (forehead, eyes, nose, mouth, chin) must be entirely inside the composition. Leave adequate margin between each face and the edge of the image. If necessary, zoom out or rearrange the composition to include everyone's full face. Face cropping is strictly forbidden.";
 
-      const naturalismClause = `NATURAL REALISM — this is the MOST IMPORTANT quality requirement. The result must NOT look AI-generated, over-polished, airbrushed, or doll-like. Real humans have:
+      const naturalismClause = `#1 TOP PRIORITY RULE — ANTI-PERFECTION / NON-NEGOTIABLE
+
+The generated image MUST NOT look like an AI-generated beauty ad. Every woman's face must look like a REAL photographed human from a candid phone snapshot — NOT a glamour render, NOT a CGI avatar, NOT a polished magazine shot, NOT Instagram-filtered.
+
+HARD REJECT any of these 'AI tells':
+- Symmetrical doll faces
+- Airbrushed porcelain skin with no pores or texture
+- Perfectly aligned teeth, perfectly plucked brows, perfectly even makeup
+- Identical beauty-level across all faces
+- Glowing 'beauty mode' lighting with no real shadows
+- Hair that looks like a shiny helmet with zero stray strands
+
+MANDATORY imperfection budget (must be visible in the final image):
+- At least one girl's skin shows actual pores, slight oiliness, mild unevenness, or faint blemishes
+- At least one girl has visible facial asymmetry (eyes not identical, eyebrows slightly different, mouth slightly tilted)
+- At least one girl has a small realistic 'flaw': tired under-eye, slight acne mark, slightly chapped lips, a baby hair sticking out, a stray eyelash
+- Lighting has REAL shadow gradation on faces — one side slightly shadowed like real studio photography
+
+The target aesthetic is 'candid real-life Taiwan hostess group photo taken on iPhone', NOT 'AI beauty generator'.
+
+---
+
+Real humans have:
 - VISIBLE skin texture: pores, fine lines, subtle acne scars, faint freckles, peach fuzz, slight redness around nose/cheeks, minor blemishes. NO plastic/CGI smooth skin allowed.
 - NATURAL asymmetry: eyes slightly uneven size, eyebrows not identical shape, smile slightly tilted, one side of face different from the other. Real faces are never symmetrical.
 - REAL teeth: not Photoshop-white; slight natural off-white, tiny gaps or overlap, slight imperfections. No 'toothpaste ad' teeth.
@@ -1292,9 +1314,10 @@ The target is: people viewing the poster should think 'these are real Taiwanese 
         imagePrompt = `${ethnicLock}
 
 ${referenceVariationClause}
+${naturalismClause}
+
 ${personCountClause}
 ${framingClause}
-${naturalismClause}
 ${referencePosterClause}
 
 Professional nightclub marketing poster for ${hotelNames[input.hotel]}, a premium luxury entertainment venue in Taiwan.
@@ -1311,9 +1334,10 @@ Vertical portrait format, 9:16 aspect ratio.`;
       } else {
         imagePrompt = `${ethnicLock}
 
+${naturalismClause}
+
 ${personCountClause}
 ${framingClause}
-${naturalismClause}
 ${referencePosterClause}
 
 Professional nightclub marketing poster for ${hotelNames[input.hotel]}, a premium luxury entertainment venue in Taiwan.
@@ -1329,7 +1353,11 @@ ${input.customPrompt ? `Additional details: ${input.customPrompt}.` : ""}
 ${qualityTerms}
 Vertical portrait format, 9:16 aspect ratio.
 
-REMINDER: The person(s) MUST be Taiwanese (East Asian, Han Chinese / Taiwanese)${input.personCount > 1 ? `, and there MUST be exactly ${input.personCount} women in the shot` : ""}. Non-negotiable.`;
+FINAL REMINDERS (non-negotiable):
+1. Persons MUST be Taiwanese (East Asian / Han Chinese / Taiwanese) — no Western, blonde, platinum, or mixed-race looks
+2. ${input.personCount > 1 ? `EXACTLY ${input.personCount} women in the shot, EACH with clearly different face / hair / outfit / beauty level. 1-2 MUST look ordinary (6-7/10), not supermodels.` : "Face must look like a real photographed human, NOT AI-perfect."}
+3. Visible skin texture, pores, asymmetry, and small imperfections are REQUIRED. Reject doll-like airbrushed faces.
+4. Aesthetic target: candid iPhone-shot Taiwan nightclub team photo, NOT AI beauty render.`;
       }
 
       const refs: RefImage[] = [];
