@@ -1221,7 +1221,7 @@ const posterRouter = router({
         ? `CRITICAL GROUP COUNT — Generate EXACTLY ${input.personCount} Taiwanese women standing together in the same frame (group shot, ensemble poster style). All ${input.personCount} women must follow the ethnicity/age/skin rules above. Arrange them in a visually balanced composition typical of Taiwanese nightclub marketing posters — e.g. standing in a row, slightly offset in depth, or grouped in a V-formation. DO NOT generate a different number of people. Exactly ${input.personCount}.
 
 CRITICAL FACIAL DIVERSITY — all ${input.personCount} women MUST have clearly DIFFERENT faces and appearances. They must look like ${input.personCount} distinct real individuals, NOT sisters, NOT twins, NOT the same face copy-pasted. Vary significantly:
-- FACE SHAPE: mix of oval, heart-shaped, round, square jaw, V-line — each person gets a different shape
+- FACE SHAPE: mix of oval, heart-shaped, V-line, softly angular, slim almond — each person gets a different shape. NEVER round / chubby / puffy faces.
 - EYE shape & size: some with larger almond eyes, some narrower, some with double eyelid, some monolid, different brow shapes
 - NOSE: different nose bridges (some higher, some softer), different nose tip shapes
 - LIPS: some fuller, some thinner, some with cupid's bow, different lip color tones
@@ -1246,12 +1246,21 @@ The goal: each woman looks like a separate real Taiwanese individual you could r
 
 ${input.personCount > 1 ? `CHARACTER DIVERSITY OF BEAUTY — with ${input.personCount} people in frame, DO NOT make all of them supermodel-perfect. Make 1-2 of them noticeably LESS 'perfect' than the rest — these could be:
 - A girl-next-door type with simpler makeup and more relatable features
-- Someone with slightly chubbier cheeks or a less sculpted face
-- Someone with smaller eyes or a wider nose
+- Someone with smaller eyes, a wider nose, or less symmetrical features
 - Someone whose pose/expression is a bit more casual, less posed
 - Someone with visible skin texture imperfections (mild acne, dark circles, dull skin patches)
 - Someone who's cute rather than stunning, sweet rather than glamorous
-This MIX of beauty levels is what makes Taiwanese hostess group photos feel REAL — not every girl is a 10/10 model. Think of actual 八大 team photos: there's always a mix of looks, builds, and beauty levels. The group looks like real coworkers, not a cloned supermodel army.` : `Include real human imperfections — this woman should look like a genuine Taiwanese influencer or hostess, not a filtered Instagram avatar. Small flaws (a tiny blemish, slight asymmetry, relatable expression) increase believability.`}
+
+This MIX of beauty levels is what makes Taiwanese hostess group photos feel REAL — not every girl is a 10/10 model. Think of actual 八大 team photos: there's always a mix of looks, builds, and beauty levels.` : `Include real human imperfections — small flaws (tiny blemish, slight asymmetry, relatable expression) increase believability.`}
+
+BODY STANDARD — ALL women in this shot, however imperfect their face, must have a SLIM / SLENDER body. Nightclub hostesses MUST be slim. NO:
+- No chubby, fat, or overweight women
+- No round puffy faces, no double chin, no full/wide jaw
+- No thick arms, no thick waist, no wide torso
+- Faces should be oval, V-line, heart-shaped, or softly angular — NEVER round or chubby
+All must have slim waist, slender arms, defined collarbone, good posture. This is a non-negotiable body requirement even when varying beauty levels.
+
+OUTFIT EXPOSURE — outfits should be a bit more revealing and seductive (nightclub hostess style): slightly lower necklines showing collarbone and upper chest, figure-hugging silhouettes that emphasize the waist and hips, shorter hem lengths showing legs, tasteful cleavage or backless details, small cut-outs or sheer panels where appropriate. Tasteful and alluring, NOT vulgar or pornographic — think upscale 八大 nightlife fashion (sexy but classy).
 
 The target is: people viewing the poster should think 'these are real Taiwanese hostesses photographed at the venue', NOT 'this is AI-generated'. Think real Taiwan IG candid shots and real team group photos — 70% polished, 30% raw reality.`;
 
