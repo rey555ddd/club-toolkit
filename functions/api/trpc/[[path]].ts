@@ -1083,6 +1083,116 @@ const copywriterRouter = router({
     }),
 });
 
+// ===== Router: Recruit (增員助手) =====
+const recruitRouter = router({
+  generateCopy: publicProcedure
+    .input(
+      z.object({
+        channel: z.enum(["dcard", "ig_story", "ig_post", "threads", "line_group"]).default("dcard"),
+        position: z.enum(["hostess", "foh", "control", "wardrobe"]).default("hostess"),
+        painPoints: z.array(z.enum(["secret", "no_photo", "base_salary", "flexible", "referral", "safe", "sister"])).default([]),
+        hotel: z.enum(["chinatown", "dihao", "both"]).default("both"),
+        customNote: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const channelMap = {
+        dcard: { label: "Dcard 徵才區", tone: "Dcard 用戶偏年輕、懷疑心重、討厭業配感。用『學姊來爆料』的口氣，像在匿名八卦。開頭要有一句 Hook 讓人願意點進來。避免過度官腔或華麗詞彙。長度 300-500 字，可分段但不要用一堆 emoji。" },
+        ig_story: { label: "Instagram 限時動態", tone: "極短、口語、直接。像閨蜜私訊喊話。一句 Hook + 一句條件 + 聯絡方式。20-40 字。" },
+        ig_post: { label: "Instagram 貼文", tone: "生活感、鏡頭感。像分享一個好工作機會給朋友。短段落、有留白、1-2 個 hashtag。80-150 字。" },
+        threads: { label: "Threads 短文", tone: "Threads 更隨性、更敢講。可以帶點自嘲或酸感。一則 150-300 字，開頭狠一點。" },
+        line_group: { label: "LINE 群組分享", tone: "傳給現職小姐的群組，拜託她們幫分享。親切直接、提獎金、附分享素材。100-200 字。" },
+      };
+      const positionMap = {
+        hostess: "公關小姐（包廂公關、檯面工作）",
+        foh: "外場服務生（不用坐檯、純服務）",
+        control: "控台人員（操控燈光音響、不需外場）",
+        wardrobe: "服裝部助理（協助小姐更衣、整理服裝）",
+      };
+      const painPointSolutions: Record<string, string> = {
+        secret: "強調【絕對保密】：不會讓家人朋友知道、隱私絕對保護、店名不會出現在任何家人看得到的地方",
+        no_photo: "強調【零曝光】：不拍宣傳照、不上網、不會被熟人認出、個資完全保密",
+        base_salary: "強調【試坐底薪保障】：新人前 N 天有底薪，不怕沒客人白做工、沒業績也有錢拿",
+        flexible: "強調【彈性排班】：想上幾天上幾天、臨時有事可以調班、不綁死",
+        referral: "強調【介紹獎金】：朋友一起來有額外獎金、組團來有加給",
+        safe: "強調【安全環境】：有幹部駐場、有 SOP 處理奧客、被騷擾可立刻喊停",
+        sister: "強調【姐妹帶領】：有資深姐姐教、不怕自己傻傻被欺負、像家人一樣互挺",
+      };
+      const hotelInfo = {
+        chinatown: "中國城經典酒店（桃園市桃園區復興路99號8樓，03-339-2188）",
+        dihao: "帝豪酒店（桃園市桃園區復興路99號6樓，03-339-3666）",
+        both: "中國城經典酒店（8F）＋ 帝豪酒店（6F），桃園市桃園區復興路99號",
+      };
+      const ch = channelMap[input.channel];
+      const painClauses = input.painPoints.map(k => painPointSolutions[k]).filter(Boolean);
+
+      const systemPrompt = `你是在桃園八大行業徵員多年、懂台妹心態的資深人資。現在要幫店裡寫一篇徵${positionMap[input.position]}的文案。
+
+通路：${ch.label}
+語氣與長度：${ch.tone}
+
+【痛點反轉心法 — 必須寫入文案】
+求職小姐最怕的 3 件事是「家人知道」「被拍照上網」「被騙沒領到錢」。你的文案不能只講待遇多好，必須主動把這些疑慮逐一化解：
+${painClauses.length > 0 ? painClauses.map((s, i) => `${i + 1}. ${s}`).join("\n") : "（使用者未勾選痛點解法，請你自己判斷加入最關鍵的 2-3 個安全感訴求）"}
+
+【介紹制思維】
+如果是公關職，結尾帶一句「朋友一起來面試有雙倍獎金／拉人進來坐滿 30 節領 1.5 萬」之類的具體介紹激勵（如果使用者勾選 referral 痛點）。
+
+【真實感鐵律】
+- 不用「加入我們」「溫馨大家庭」「年輕有活力團隊」這種人資模板官腔
+- 不裝夢幻、不用『姐姐帶著妳飛』之類的肉麻句
+- 帶至少一個具體數字（底薪範圍 / 介紹獎金 / 上手天數），讓人覺得這是真的不是話術
+- Hook 開頭：痛點提問／具體數字／反常識／直球說心聲，四選一
+- 結尾 CTA：留 LINE ID 或聯絡窗口，動作明確
+
+酒店：${hotelInfo[input.hotel]}
+
+${input.customNote ? "使用者補充說明：" + input.customNote : ""}`;
+
+      const content = await geminiGenerateText(ctx.env.GEMINI_API_KEY, {
+        systemPrompt: withMarketing(systemPrompt),
+        userPrompt: `請幫我寫一篇${positionMap[input.position]}徵才文案，發布在${ch.label}。嚴格遵守上述痛點反轉心法。直接輸出文案，不要任何前言或說明。`,
+      });
+
+      return { content };
+    }),
+
+  generateReferralMessage: publicProcedure
+    .input(
+      z.object({
+        currentCount: z.number().min(1).default(10),
+        targetCount: z.number().min(1).default(5),
+        bonusPerHead: z.number().min(0).default(15000),
+        customNote: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const systemPrompt = `你是桃園八大資深幹部，要在店內群組發一則激勵現職小姐介紹新人來的訊息。
+
+情境：
+- 目前現職小姐 ${input.currentCount} 人
+- 這個月目標再補 ${input.targetCount} 人
+- 介紹 1 人進來坐滿 30 節 → 介紹人領 ${input.bonusPerHead.toLocaleString()} 元
+
+語氣要求：
+- 像姐姐在群組講話，親切但有推進感，不裝模作樣
+- 不用官腔詞（如：親愛的夥伴、團隊榮耀、共創佳績）
+- 要點出「現在缺人，生意太好坐不過來」的真實感
+- 具體講獎金怎麼算、坐滿 30 節大概多久（約 1 個月內）
+- 結尾 CTA：把她想推薦的朋友 LINE 丟進群組／直接傳給幹部
+- 長度 100-180 字，分 2-3 段
+
+${input.customNote ? "使用者補充：" + input.customNote : ""}`;
+
+      const content = await geminiGenerateText(ctx.env.GEMINI_API_KEY, {
+        systemPrompt: withMarketing(systemPrompt),
+        userPrompt: "請幫我寫這則群組激勵訊息。直接輸出，不要前言說明。",
+      });
+
+      return { content };
+    }),
+});
+
 // ===== Router: Planner =====
 const plannerRouter = router({
   generate: publicProcedure
@@ -1510,6 +1620,7 @@ const appRouter = router({
   planner: plannerRouter,
   poster: posterRouter,
   suggestions: suggestionsRouter,
+  recruit: recruitRouter,
 });
 
 export type AppRouter = typeof appRouter;

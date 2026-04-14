@@ -10,6 +10,7 @@ import Copywriter from "./pages/Copywriter";
 import Poster from "./pages/Poster";
 import Planner from "./pages/Planner";
 import Suggestions from "./pages/Suggestions";
+import Recruit from "./pages/Recruit";
 
 function Router() {
   return (
@@ -18,6 +19,7 @@ function Router() {
       <Route path="/copywriter" component={Copywriter} />
       <Route path="/poster" component={Poster} />
       <Route path="/planner" component={Planner} />
+      <Route path="/recruit" component={Recruit} />
       <Route path="/suggestions" component={Suggestions} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

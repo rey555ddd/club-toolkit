@@ -10,6 +10,7 @@ const navItems = [
   { label: "文案產生器", path: "/copywriter" },
   { label: "女神海報生成器", path: "/poster" },
   { label: "活動企劃師", path: "/planner" },
+  { label: "徵才助手", path: "/recruit" },
   { label: "修改建議", path: "/suggestions" },
 ];
 

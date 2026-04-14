@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { FileText, Image, CalendarDays, ChevronRight, Zap, Shield, Target } from "lucide-react";
+import { FileText, Image, CalendarDays, ChevronRight, Zap, Shield, Target, UserPlus } from "lucide-react";
 
 const CHINATOWN_LOGO = "/logos/chinatown-transparent.png";
 const DIHAO_LOGO = "/logos/empire-new.jpeg";
@@ -29,6 +29,14 @@ const features = [
     path: "/planner",
     tag: "完整企劃輸出",
     color: "#38bdf8",
+  },
+  {
+    icon: UserPlus,
+    title: "徵才助手",
+    desc: "三位一體解決增員問題：痛點反轉徵才文案（Dcard／IG／Threads）、徵才海報、介紹制計算。",
+    path: "/recruit",
+    tag: "增員神器",
+    color: "#22c55e",
   },
 ];
 
@@ -177,7 +185,7 @@ export default function Home() {
           </div>
 
           {/* 功能卡片 */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 max-w-5xl mx-auto">
             {features.map((f) => (
               <Link key={f.path} href={f.path}>
                 <div
