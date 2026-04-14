@@ -970,6 +970,7 @@ const copywriterRouter = router({
         platform: z.enum(["ig_post", "ig_story", "fb_post", "line_msg", "sms"]).default("ig_post"),
         elements: z.array(z.string()).default([]),
         customNote: z.string().optional(),
+        librarySamples: z.array(z.object({ name: z.string(), content: z.string() })).optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -1046,6 +1047,10 @@ const copywriterRouter = router({
       const customText = input.customNote
         ? "\n\n使用者補充說明：" + input.customNote
         : "";
+      const libraryText = input.librarySamples && input.librarySamples.length > 0
+        ? "\n\n══ 使用者過去的文案範本 ══\n請深度參考這些過去範本的語氣、用字、節奏、結構，讓新產出的文案跟店裡風格一致：\n" +
+          input.librarySamples.map((s, i) => `\n【範本 ${i + 1}：${s.name}】\n${s.content}`).join("\n") + "\n══════════════════"
+        : "";
 
       const systemPrompt = typePrompts[input.type] + `
 
@@ -1075,7 +1080,7 @@ const copywriterRouter = router({
 
 【行銷 4 有自檢】
 有哏：讓人想停下來看 / 有關：跟目標受眾的生活有關 / 有感：引起情緒共鳴 / 有想要：看完想行動
-` + elementsText + customText;
+` + elementsText + customText + libraryText;
       const content = await geminiGenerateText(ctx.env.GEMINI_API_KEY, { systemPrompt: withMarketing(systemPrompt), userPrompt: "請幫我寫一篇" + typeLabels[input.type] + "，發布在" + platformInfo.label + "。字數控制在" + platformInfo.length + "。精簡有力，每個字都要有用。直接輸出文案，不要任何前言、說明、或「以下是文案」之類的開場。",
       });
 
@@ -1093,6 +1098,7 @@ const recruitRouter = router({
         painPoints: z.array(z.enum(["secret", "no_photo", "base_salary", "flexible", "referral", "safe", "sister"])).default([]),
         hotel: z.enum(["chinatown", "dihao", "both"]).default("both"),
         customNote: z.string().optional(),
+        librarySamples: z.array(z.object({ name: z.string(), content: z.string() })).optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -1147,7 +1153,13 @@ ${painClauses.length > 0 ? painClauses.map((s, i) => `${i + 1}. ${s}`).join("\n"
 
 酒店：${hotelInfo[input.hotel]}
 
-${input.customNote ? "使用者補充說明：" + input.customNote : ""}`;
+${input.customNote ? "使用者補充說明：" + input.customNote : ""}
+
+${input.librarySamples && input.librarySamples.length > 0
+  ? "══ 使用者過去的文案範本 ══\n請深度參考這些過去範本的語氣、用字、節奏，讓新產出的徵才文案跟店裡風格一致：\n" +
+    input.librarySamples.map((s, i) => `\n【範本 ${i + 1}：${s.name}】\n${s.content}`).join("\n") +
+    "\n══════════════════"
+  : ""}`;
 
       const content = await geminiGenerateText(ctx.env.GEMINI_API_KEY, {
         systemPrompt: withMarketing(systemPrompt),
@@ -1164,9 +1176,19 @@ ${input.customNote ? "使用者補充說明：" + input.customNote : ""}`;
           role: z.enum(["system", "user", "assistant"]),
           content: z.string(),
         })).min(1),
+        librarySummary: z.object({
+          posters: z.number(),
+          hostessPhotos: z.number(),
+          planners: z.number(),
+          copySamples: z.number(),
+        }).optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
+      const libNote = input.librarySummary
+        ? `\n\n使用者目前在『檔案上傳區』已上傳：海報 ${input.librarySummary.posters} 張、小姐照片 ${input.librarySummary.hostessPhotos} 張、活動企劃 ${input.librarySummary.planners} 份、文案範本 ${input.librarySummary.copySamples} 份。這些會被自動整合進對應生成器——你回答時可提醒使用者多上傳以增加產出穩定度，或建議他先去補上資料。`
+        : "";
+
       const systemPrompt = `你是桃園八大行業『中國城經典酒店』與『帝豪酒店』的增員顧問助手，專門協助酒店老闆／經理／小編處理徵才、增員、招募小姐、留才、舊客回流等問題。
 
 你的知識範圍（本工具內建的方法論）：
@@ -1175,7 +1197,7 @@ ${input.customNote ? "使用者補充說明：" + input.customNote : ""}`;
 3. 介紹制（最強增員手段）：現職介紹 1 人坐滿 30 節 → 領 1.5 萬左右；預算一次到位比每週小獎勵有效
 4. 分眾文案：Dcard 用學姊爆料口吻、IG 用鏡頭感、Threads 用敢講風格、LINE 群用傳給現職拜託她轉發
 5. 工具對應：本網站有四大功能 — 文案產生器（/copywriter）、女神海報生成器（/poster）、活動企劃師（/planner）、徵才助手（/recruit 含三個 Tab）
-6. 本站『徵才助手』頁有 3 個 Tab：Tab 1 痛點反轉徵才文案（選通路、職位、痛點自動勾選）、Tab 2 徵才海報（溫馨工作環境／高薪直白／派對氣氛 3 種模式）、Tab 3 介紹制計算（輸入人數與獎金算出建議方案＋群組激勵訊息）
+6. 本站『徵才助手』頁有 3 個 Tab：Tab 1 痛點反轉徵才文案（選通路、職位、痛點自動勾選）、Tab 2 介紹制計算（輸入人數與獎金算出建議方案＋群組激勵訊息）、Tab 3 檔案上傳區（素材庫，上傳後會自動餵給其他生成器參考）${libNote}
 
 你的任務：
 - 用對話方式引導使用者，協助他釐清自己要徵誰、多少人、預算多少、目標通路是哪裡
@@ -1258,6 +1280,7 @@ const plannerRouter = router({
         budget: z.string().optional(),
         targetAudience: z.string().optional(),
         specialRequirements: z.string().optional(),
+        librarySamples: z.array(z.object({ name: z.string(), content: z.string() })).optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -1292,7 +1315,14 @@ ${input.specialRequirements ? `ç¹æ®éæ±ï¼${input.specialRequ
 
 è«çµ¦æä¸ä»½å®æ´çæ´»åä¼åã`;
 
-      const content = await geminiGenerateText(ctx.env.GEMINI_API_KEY, { systemPrompt: withMarketing(systemPrompt), userPrompt,
+      const libraryBlock = input.librarySamples && input.librarySamples.length > 0
+        ? "\n\n══ 使用者過去的活動企劃範本 ══\n請深度參考這些過去企劃的格式、章節結構、用字風格、執行節奏，讓新企劃跟店裡 SOP 一致：\n" +
+          input.librarySamples.map((s, i) => `\n【範本 ${i + 1}：${s.name}】\n${s.content}`).join("\n") + "\n══════════════════"
+        : "";
+
+      const content = await geminiGenerateText(ctx.env.GEMINI_API_KEY, {
+        systemPrompt: withMarketing(systemPrompt + libraryBlock),
+        userPrompt,
       });
 
       return { content };
@@ -1318,6 +1348,8 @@ const posterRouter = router({
         outfitStyle: z.enum(["silver_sequin", "gold_gown", "sweet_cutie", "black_slip", "red_tight", "lace_sheer", "pastel_princess", "crystal_mini", "velvet_bodycon", "bikini_cover", "cheongsam", "white_angel"]).optional(),
         scene: z.enum(["vip_room", "dance_floor", "bar_counter", "red_carpet", "stage_show", "lounge_sofa", "champagne_tower", "edm_party", "birthday_vip", "starlight_corridor"]).optional(),
         excludeText: z.boolean().default(false),
+        libraryPosterImages: z.array(z.object({ data: z.string(), mimeType: z.string(), name: z.string() })).optional(),
+        libraryHostessPhotos: z.array(z.object({ data: z.string(), mimeType: z.string(), name: z.string() })).optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -1554,8 +1586,29 @@ FINAL REMINDERS (non-negotiable):
         const r = parseDataUrl(input.referencePosterUrl, "reference poster (match its composition, color palette, lighting, mood, typography placement, and overall design language)");
         if (r) refs.push(r);
       }
-      // 若使用者沒上傳人物參考，從台灣地面真相池隨機抽 2 張當族裔參考
-      if (!input.hasUploadedPhoto) {
+      // 使用者素材庫：過去的海報作為構圖／色調／風格參考
+      if (input.libraryPosterImages && input.libraryPosterImages.length > 0) {
+        for (const img of input.libraryPosterImages) {
+          refs.push({
+            mimeType: img.mimeType,
+            data: img.data,
+            label: `user's past poster『${img.name}』 — match its overall composition, color palette, typography placement, decorative vibe, and brand aesthetic`,
+          });
+        }
+      }
+      // 使用者素材庫：員工形象照作為族裔／風格基準（但不複製臉）
+      if (input.libraryHostessPhotos && input.libraryHostessPhotos.length > 0) {
+        for (const img of input.libraryHostessPhotos) {
+          refs.push({
+            mimeType: img.mimeType,
+            data: img.data,
+            label: `actual hostess from user's venue『${img.name}』 — use as ethnic/age/makeup/vibe ground truth for this poster, but DO NOT copy any specific face; generate different individuals who match the same overall aesthetic`,
+          });
+        }
+      }
+      // 若使用者沒上傳人物參考也沒有素材庫照片，從台灣地面真相池隨機抽 2 張
+      const hasUserRefs = input.hasUploadedPhoto || (input.libraryHostessPhotos && input.libraryHostessPhotos.length > 0);
+      if (!hasUserRefs) {
         const autoRefs = await fetchTaiwanRefs(ctx.requestUrl, 2);
         refs.push(...autoRefs);
       }

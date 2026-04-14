@@ -23,9 +23,10 @@ import {
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { AIChatBox, type Message } from "@/components/AIChatBox";
+import { getTextSamples, getImageRefs, getLibrarySummary, loadLibrary as _loadLibrary } from "@/lib/library";
+import type { FileCategory, LibraryItem } from "@/lib/library";
 
 type Tab = "copy" | "referral" | "library";
-type FileCategory = "poster" | "hostess_photo" | "planner" | "copy_sample";
 type Channel = "dcard" | "ig_story" | "ig_post" | "threads" | "line_group";
 type Position = "hostess" | "foh" | "control" | "wardrobe";
 type PainPoint = "secret" | "no_photo" | "base_salary" | "flexible" | "referral" | "safe" | "sister";
@@ -134,7 +135,16 @@ function RecruitChatAssistant() {
   const handleSend = (content: string) => {
     const next: Message[] = [...messages, { role: "user", content }];
     setMessages(next);
-    chatMut.mutate({ messages: next });
+    const summary = getLibrarySummary();
+    chatMut.mutate({
+      messages: next,
+      librarySummary: {
+        posters: summary.posters,
+        hostessPhotos: summary.hostessPhotos,
+        planners: summary.planners,
+        copySamples: summary.copySamples,
+      },
+    });
   };
 
   const suggested = [
@@ -246,6 +256,7 @@ function CopyTab() {
       painPoints: Array.from(pains),
       hotel,
       customNote: note || undefined,
+      librarySamples: getTextSamples("copy_sample", 3),
     });
   };
 
@@ -639,16 +650,6 @@ function RefinementBox({ value, onChange, onApply, onRegen, isPending, color, pl
 // ────────────────────────────────────────────────────
 // Tab 3: 檔案上傳區（素材庫）
 // ────────────────────────────────────────────────────
-type LibraryItem = {
-  id: string;
-  category: FileCategory;
-  name: string;
-  kind: "image" | "text";
-  data: string; // base64 dataURL for image, plain text for text
-  size: number;
-  createdAt: number;
-};
-
 const CATEGORIES: { id: FileCategory; label: string; desc: string; kind: "image" | "text"; color: string }[] = [
   { id: "poster", label: "過去的海報", desc: "上傳過去做過的活動／徵才海報，當風格參考", kind: "image", color: "#c084fc" },
   { id: "hostess_photo", label: "小姐照片", desc: "員工形象照，未來生成人物時可參考", kind: "image", color: "#ec4899" },
@@ -656,21 +657,11 @@ const CATEGORIES: { id: FileCategory; label: string; desc: string; kind: "image"
   { id: "copy_sample", label: "文案範本", desc: "過去有效的文案，AI 模仿語氣與套路", kind: "text", color: "#f0c040" },
 ];
 
-const LS_KEY = "club-toolkit-library";
-
-function loadLibrary(): LibraryItem[] {
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    if (!raw) return [];
-    return JSON.parse(raw);
-  } catch {
-    return [];
-  }
-}
+function loadLibrary(): LibraryItem[] { return _loadLibrary(); }
 
 function saveLibrary(items: LibraryItem[]) {
   try {
-    localStorage.setItem(LS_KEY, JSON.stringify(items));
+    localStorage.setItem("club-toolkit-library", JSON.stringify(items));
   } catch (e) {
     toast.error("儲存失敗（可能超出瀏覽器容量限制）：" + (e instanceof Error ? e.message : ""));
   }

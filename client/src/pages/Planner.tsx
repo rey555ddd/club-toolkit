@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { getTextSamples } from "@/lib/library";
 import { toast } from "sonner";
 import { CalendarDays, Copy, RefreshCw, Check, ChevronDown, ChevronUp, Download } from "lucide-react";
 import { Streamdown } from "streamdown";
@@ -75,6 +76,7 @@ export default function Planner() {
       budget: budget || undefined,
       targetAudience: targetAudience || undefined,
       specialRequirements: mergedSpecial || undefined,
+      librarySamples: getTextSamples("planner", 3),
     });
   };
 

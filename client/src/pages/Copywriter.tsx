@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { getTextSamples } from "@/lib/library";
 import { toast } from "sonner";
 import { FileText, Copy, RefreshCw, ChevronDown, ChevronUp, Check } from "lucide-react";
 import { Streamdown } from "streamdown";
@@ -164,6 +165,7 @@ export default function Copywriter() {
       platform: selectedPlatform,
       elements: selectedElements,
       customNote: merged || undefined,
+      librarySamples: getTextSamples("copy_sample", 3),
     });
   };
 

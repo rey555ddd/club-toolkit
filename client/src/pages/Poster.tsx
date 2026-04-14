@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
+import { getImageRefs } from "@/lib/library";
 import { toast } from "sonner";
 import {
   Image,
@@ -732,6 +733,8 @@ export default function Poster() {
       referencePosterUrl: referencePosterUrl ?? undefined,
       personCount,
       customPrompt: merged || undefined,
+      libraryPosterImages: getImageRefs("poster", 2),
+      libraryHostessPhotos: getImageRefs("hostess_photo", 2),
       effects: selectedEffects,
       personStyle: selectedPersonStyle || undefined,
       outfitStyle: selectedOutfitStyle || undefined,
