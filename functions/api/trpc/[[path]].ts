@@ -682,6 +682,7 @@ interface Env {
 
 interface Context {
   env: Env;
+  requestUrl: string;
 }
 
 interface PagesFunction<Env = unknown> {
@@ -787,6 +788,46 @@ function parseDataUrl(dataUrl: string, label: string): RefImage | null {
   const m = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
   if (!m) return null;
   return { mimeType: m[1], data: m[2], label };
+}
+
+// 台灣女性地面真相參考池 — 每次生成隨機抽 2 張當 multimodal 參考
+const TAIWAN_REF_POOL = Array.from({ length: 14 }, (_, i) => `/refs/taiwan/tw-ref-${String(i + 1).padStart(2, "0")}.jpg`);
+
+function bufferToBase64(buf: ArrayBuffer): string {
+  const bytes = new Uint8Array(buf);
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
+async function fetchTaiwanRefs(requestUrl: string, count = 2): Promise<RefImage[]> {
+  try {
+    const origin = new URL(requestUrl).origin;
+    const shuffled = [...TAIWAN_REF_POOL].sort(() => Math.random() - 0.5).slice(0, count);
+    const results = await Promise.all(
+      shuffled.map(async (path) => {
+        try {
+          const res = await fetch(`${origin}${path}`, { cf: { cacheTtl: 86400 } } as RequestInit);
+          if (!res.ok) return null;
+          const buf = await res.arrayBuffer();
+          return {
+            mimeType: res.headers.get("content-type") ?? "image/jpeg",
+            data: bufferToBase64(buf),
+            label: "Taiwanese woman ground-truth appearance reference — use this only as ethnic/age/skin/makeup/vibe ground truth; DO NOT copy any face, generate a completely different individual",
+          } as RefImage;
+        } catch {
+          return null;
+        }
+      })
+    );
+    return results.filter((r): r is RefImage => r !== null);
+  } catch (e) {
+    console.error("[taiwan-refs] failed to fetch:", e);
+    return [];
+  }
 }
 
 async function tryGeminiImageModel(
@@ -1259,6 +1300,11 @@ REMINDER: The person(s) MUST be Taiwanese (East Asian, Han Chinese / Taiwanese)$
         const r = parseDataUrl(input.referencePosterUrl, "reference poster (match its composition, color palette, lighting, mood, typography placement, and overall design language)");
         if (r) refs.push(r);
       }
+      // 若使用者沒上傳人物參考，從台灣地面真相池隨機抽 2 張當族裔參考
+      if (!input.hasUploadedPhoto) {
+        const autoRefs = await fetchTaiwanRefs(ctx.requestUrl, 2);
+        refs.push(...autoRefs);
+      }
 
       const imageDataUrl = await geminiGenerateImage(ctx.env.GEMINI_API_KEY, imagePrompt, refs);
 
@@ -1384,6 +1430,6 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     endpoint: "/api/trpc",
     req: context.request,
     router: appRouter,
-    createContext: () => ({ env: context.env as unknown as Env }),
+    createContext: () => ({ env: context.env as unknown as Env, requestUrl: context.request.url }),
   });
 };
