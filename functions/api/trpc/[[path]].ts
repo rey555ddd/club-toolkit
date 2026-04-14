@@ -749,7 +749,7 @@ async function tryImagen4(apiKey: string, prompt: string): Promise<string | null
           instances: [{ prompt }],
           parameters: {
             sampleCount: 1,
-            aspectRatio: "9:16",
+            aspectRatio: "3:4",
             safetyFilterLevel: "block_only_high",
             personGeneration: "allow_adult",
           },
@@ -846,7 +846,7 @@ async function tryGeminiImageModel(
     });
 
     const textPart = {
-      text: `Generate a professional vertical marketing poster (9:16 ratio) for a luxury nightclub in Taiwan.${
+      text: `Generate a professional vertical marketing poster (3:4 / 2:3 classic poster ratio, NOT phone-story 9:16) for a luxury nightclub in Taiwan.${
         refs.length ? `\n\nThe user has attached ${refs.length} reference image(s): ${refs.map(r => r.label).join("; ")}. Study them carefully and incorporate their style/composition/mood as instructed in the detailed prompt below.\n` : ""
       }\n${prompt}`,
     };
@@ -879,7 +879,7 @@ async function tryGemini20ImageModel(
 ): Promise<string | null> {
   try {
     const textPart: { text: string } = {
-      text: `Generate a professional vertical marketing poster (9:16 ratio) for a luxury nightclub in Taiwan.${
+      text: `Generate a professional vertical marketing poster (3:4 / 2:3 classic poster ratio, NOT phone-story 9:16) for a luxury nightclub in Taiwan.${
         refs.length ? `\n\nThe user has attached ${refs.length} reference image(s): ${refs.map(r => r.label).join("; ")}.\n` : ""
       }\n${prompt}`,
     };
@@ -1351,7 +1351,7 @@ ${effectKeywords}
 ${typographyLine}
 ${input.customPrompt ? `Additional details: ${input.customPrompt}.` : ""}
 ${qualityTerms}
-Vertical portrait format, 9:16 aspect ratio.`;
+Vertical portrait format, classic poster aspect ratio 3:4 or 2:3 (same proportion as the Taiwan reference posters provided — traditional printable poster format, NOT phone-story 9:16). Compose the image to fit this wider-than-phone vertical rectangle.`;
       } else {
         imagePrompt = `${ethnicLock}
 
@@ -1372,7 +1372,7 @@ ${typographyLine}
 ${personPhotographyTerms}
 ${input.customPrompt ? `Additional details: ${input.customPrompt}.` : ""}
 ${qualityTerms}
-Vertical portrait format, 9:16 aspect ratio.
+Vertical portrait format, classic poster aspect ratio 3:4 or 2:3 (same proportion as the Taiwan reference posters provided — traditional printable poster format, NOT phone-story 9:16). Compose the image to fit this wider-than-phone vertical rectangle.
 
 FINAL REMINDERS (non-negotiable):
 1. Persons MUST be Taiwanese (East Asian / Han Chinese / Taiwanese) — no Western, blonde, platinum, or mixed-race looks
