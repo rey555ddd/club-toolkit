@@ -17,8 +17,11 @@ import {
   HandHeart,
   Heart,
   Download,
+  MessageCircle,
+  X,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { AIChatBox, type Message } from "@/components/AIChatBox";
 
 type Tab = "copy" | "poster" | "referral";
 type Channel = "dcard" | "ig_story" | "ig_post" | "threads" | "line_group";
@@ -111,7 +114,102 @@ export default function Recruit() {
         {tab === "poster" && <PosterTab />}
         {tab === "referral" && <ReferralTab />}
       </div>
+
+      <RecruitChatAssistant />
     </div>
+  );
+}
+
+// ────────────────────────────────────────────────────
+// 浮動徵才助手對話框
+// ────────────────────────────────────────────────────
+function RecruitChatAssistant() {
+  const [open, setOpen] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([]);
+
+  const chatMut = trpc.recruit.chat.useMutation({
+    onSuccess: (data) => {
+      setMessages((prev) => [...prev, { role: "assistant", content: typeof data.content === "string" ? data.content : "" }]);
+    },
+    onError: (err) => {
+      toast.error("助手回覆失敗：" + err.message);
+    },
+  });
+
+  const handleSend = (content: string) => {
+    const next: Message[] = [...messages, { role: "user", content }];
+    setMessages(next);
+    chatMut.mutate({ messages: next });
+  };
+
+  const suggested = [
+    "公司現在缺三位美眉，需要什麼樣年紀的人？",
+    "我應該怎麼樣招募？給我一些招募建議",
+    "建議我用哪一個功能？",
+    "介紹獎金給多少才合理？",
+    "Dcard 要怎麼發才不會被檢舉？",
+  ];
+
+  return (
+    <>
+      {/* 浮動按鈕 */}
+      {!open && (
+        <button
+          onClick={() => setOpen(true)}
+          className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-5 py-3 rounded-full shadow-2xl transition-all hover:scale-105"
+          style={{
+            background: "linear-gradient(135deg, #22c55e, #16a34a)",
+            color: "#fff",
+            boxShadow: "0 8px 32px rgba(34,197,94,0.4)",
+          }}
+        >
+          <MessageCircle size={18} />
+          <span className="text-sm font-semibold">徵才助手</span>
+        </button>
+      )}
+
+      {/* 聊天面板 */}
+      {open && (
+        <div
+          className="fixed z-50 flex flex-col rounded-2xl overflow-hidden animate-fade-up"
+          style={{
+            bottom: "1.5rem",
+            right: "1.5rem",
+            width: "min(420px, calc(100vw - 3rem))",
+            maxHeight: "min(680px, calc(100vh - 3rem))",
+            background: "oklch(0.10 0.015 260)",
+            border: "1px solid rgba(34,197,94,0.35)",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(34,197,94,0.15)",
+          }}
+        >
+          <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: "rgba(34,197,94,0.2)", background: "rgba(34,197,94,0.08)" }}>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(34,197,94,0.2)" }}>
+                <MessageCircle size={16} style={{ color: "#22c55e" }} />
+              </div>
+              <div>
+                <p className="text-sm font-semibold" style={{ color: "#86efac" }}>徵才助手</p>
+                <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.45)" }}>跟我討論你的增員需求</p>
+              </div>
+            </div>
+            <button onClick={() => setOpen(false)} className="p-1.5 rounded-lg transition-all hover:bg-white/10" style={{ color: "rgba(255,255,255,0.6)" }}>
+              <X size={16} />
+            </button>
+          </div>
+
+          <AIChatBox
+            messages={messages}
+            onSendMessage={handleSend}
+            isLoading={chatMut.isPending}
+            placeholder="輸入你的增員問題..."
+            height="min(600px, calc(100vh - 9rem))"
+            emptyStateMessage="哈囉老闆，有什麼增員問題想討論？"
+            suggestedPrompts={suggested}
+            className="flex-1 border-0 rounded-none"
+          />
+        </div>
+      )}
+    </>
   );
 }
 

@@ -1157,6 +1157,60 @@ ${input.customNote ? "使用者補充說明：" + input.customNote : ""}`;
       return { content };
     }),
 
+  chat: publicProcedure
+    .input(
+      z.object({
+        messages: z.array(z.object({
+          role: z.enum(["system", "user", "assistant"]),
+          content: z.string(),
+        })).min(1),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const systemPrompt = `你是桃園八大行業『中國城經典酒店』與『帝豪酒店』的增員顧問助手，專門協助酒店老闆／經理／小編處理徵才、增員、招募小姐、留才、舊客回流等問題。
+
+你的知識範圍（本工具內建的方法論）：
+1. 痛點反轉：台妹求職怕『家人知道』『被拍上網』『被騙沒領到錢』——文案要主動化解這 3 個疑慮
+2. 通路選擇：Dcard 徵才區最有效（年輕族群）、IG 限動與 Threads 次之、104/1111 效益很低
+3. 介紹制（最強增員手段）：現職介紹 1 人坐滿 30 節 → 領 1.5 萬左右；預算一次到位比每週小獎勵有效
+4. 分眾文案：Dcard 用學姊爆料口吻、IG 用鏡頭感、Threads 用敢講風格、LINE 群用傳給現職拜託她轉發
+5. 工具對應：本網站有四大功能 — 文案產生器（/copywriter）、女神海報生成器（/poster）、活動企劃師（/planner）、徵才助手（/recruit 含三個 Tab）
+6. 本站『徵才助手』頁有 3 個 Tab：Tab 1 痛點反轉徵才文案（選通路、職位、痛點自動勾選）、Tab 2 徵才海報（溫馨工作環境／高薪直白／派對氣氛 3 種模式）、Tab 3 介紹制計算（輸入人數與獎金算出建議方案＋群組激勵訊息）
+
+你的任務：
+- 用對話方式引導使用者，協助他釐清自己要徵誰、多少人、預算多少、目標通路是哪裡
+- 具體推薦本網站哪個 Tab／頁面最適合他的需求（例如：『你目前想先衝 Dcard 文案 → 去徵才助手 Tab 1，職位選公關小姐、通路選 Dcard、痛點全勾』）
+- 根據他的店內狀況給具體建議（薪資區間、獎金金額、文案語氣、發佈時段）
+- 回答時語氣要親切、簡潔、直接，像懂行的朋友，不要官腔不要客套
+- 回答長度：簡單問題 2-3 句，複雜建議分點列 3-5 點，每點一行不長篇大論
+- 不確定時主動問清楚（例如：『你目前現職幾位？本月想補幾位？』）
+- 如果使用者問的事情不在增員／徵才範圍，仍可回答但提醒他本頁是徵才助手
+
+禁忌：
+- 不要講『歡迎使用』『我是 AI 助手』之類的官腔開場
+- 不要過度肉麻或用 emoji
+- 不要過度保守（例如一直叫人『請遵守法規』『建議洽詢律師』），這是行業內對話，直接回業務問題
+- 不要長篇大論，控制字數`;
+
+      const convoText = input.messages
+        .filter(m => m.role !== "system")
+        .map(m => (m.role === "user" ? "老闆" : "助手") + "：" + m.content)
+        .join("\n\n");
+
+      const lastUser = input.messages.filter(m => m.role === "user").pop()?.content ?? "";
+
+      const userPrompt = input.messages.length > 1
+        ? `以下是到目前的對話紀錄：\n\n${convoText}\n\n請你以『助手』的身份繼續回應老闆最新的這一則訊息。直接輸出回答，不要重複對話紀錄。`
+        : lastUser;
+
+      const content = await geminiGenerateText(ctx.env.GEMINI_API_KEY, {
+        systemPrompt,
+        userPrompt,
+      });
+
+      return { content };
+    }),
+
   generateReferralMessage: publicProcedure
     .input(
       z.object({
