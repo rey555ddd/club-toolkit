@@ -185,7 +185,7 @@ export default function Home() {
           </div>
 
           {/* 功能卡片 */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-4xl mx-auto">
             {features.map((f) => (
               <Link key={f.path} href={f.path}>
                 <div
@@ -242,7 +242,7 @@ export default function Home() {
 
                   <div
                     className="flex items-center gap-1 text-sm font-medium transition-all duration-300 group-hover:gap-2"
-                    style={{ color: f.color }}
+                    style={{ color: "rgba(201,168,76,0.85)" }}
                   >
                     立即使用
                     <ChevronRight size={15} />
@@ -320,6 +320,26 @@ export default function Home() {
                 </p>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Changelog Section */}
+      <section className="py-10" style={{ borderTop: "1px solid rgba(240,192,64,0.1)" }}>
+        <div className="container mx-auto px-4 lg:px-8 max-w-4xl">
+          <p className="text-[10px] tracking-[0.12em] mb-4" style={{ color: "rgba(240,192,64,0.55)" }}>CHANGELOG</p>
+          <div className="space-y-3">
+            {[
+              { date: "2026-04-16", tag: "New", desc: "文案工具加入 FeedbackBar（採用 / 重做 / 存金庫）" },
+              { date: "2026-04-16", tag: "New", desc: "首頁功能卡片調整為 3 欄佈局，CTA 統一金色" },
+              { date: "2026-04-14", tag: "Fix", desc: "修正後端中文字元雙重編碼問題，提示語恢復正常" },
+            ].map((item, i) => (
+              <div key={i} className="flex items-start gap-3 text-[12px]">
+                <span className="font-mono mt-0.5 w-24 shrink-0" style={{ color: "rgba(255,255,255,0.25)" }}>{item.date}</span>
+                <span className="px-2 py-0.5 rounded text-[10px] tracking-[0.06em] shrink-0" style={{ background: "rgba(240,192,64,0.1)", color: "rgba(240,192,64,0.9)", border: "1px solid rgba(240,192,64,0.2)" }}>{item.tag}</span>
+                <span style={{ color: "rgba(255,255,255,0.5)" }}>{item.desc}</span>
+              </div>
+            ))}
           </div>
         </div>
       </section>

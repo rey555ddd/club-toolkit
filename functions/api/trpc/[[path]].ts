@@ -678,6 +678,7 @@ const withMarketing = (prompt: string) => {
 // ===== Types & Interfaces =====
 interface Env {
   GEMINI_API_KEY: string;
+  DB?: D1Database;
 }
 
 interface Context {
@@ -1285,35 +1286,35 @@ const plannerRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       const hotelInfo: Record<string, string> = {
-        chinatown: "ä¸­ååç¶å¸éåºï¼æ¡åå¸æ¡ååå¾©èè·¯99è8æ¨ï¼é»è©± 03-339-2188ï¼",
-        dihao: "å¸è±ªéåºï¼æ¡åå¸æ¡ååå¾©èè·¯99è6æ¨ï¼é»è©± 03-339-3666ï¼",
-        both: "ä¸­ååç¶å¸éåºï¼8æ¨ï¼03-339-2188ï¼Ã å¸è±ªéåºï¼6æ¨ï¼03-339-3666ï¼",
+        chinatown: "中國城經典酒店（桃園市桃園區復興路99號8樓，電話 03-339-2188）",
+        dihao: "帝豪酒店（桃園市桃園區復興路99號6樓，電話 03-339-3666）",
+        both: "中國城經典酒店（8樓，03-339-2188）× 帝豪酒店（6樓，03-339-3666）",
       };
 
-      const systemPrompt = `ä½ æ¯ä¸åå¨å°ç£å«å¤§è¡æ¥­éåºæ¥­å·¥ä½è¶éåå¹´çèæï¼å°éè² è²¬æ´»åä¼ååè¡é·ã
-ä½ éå¸¸äºè§£éåºæ¥­ççæãå®¢äººçå¿çãä»¥åä»éº¼æ¨£çæ´»åæè½å¸¶åæ¥­ç¸¾ã
+      const systemPrompt = `你是一個在台灣八大行業酒店業工作超過十年的老手，專門負責活動企劃和行銷。
+你非常了解酒店業的生態、客人的心理、以及什麼樣的活動最能帶動業績。
 
-éåºè³è¨ï¼${hotelInfo[input.hotel]}
+酒店資訊：${hotelInfo[input.hotel]}
 
-è«å¹«æè¦åä¸åå®æ´çæ´»åä¼åï¼åå«ä»¥ä¸å§å®¹ï¼
-1. æ´»åä¸»é¡èåç¨±
-2. æ´»åæ ¸å¿è³£é»ï¼3-5åï¼
-3. å·è¡æç¨ï¼æ´»ååãæ´»åä¸­ãæ´»åå¾ï¼
-4. å®£å³ææ¡ï¼å¯ä»¥æäººåï¼ç¬¦åéåºæ¥­é¢¨æ ¼ï¼
-5. Callå®¢ç­ç¥ï¼æéº¼è®èå®¢äººåä¾ï¼
-6. é ç®å»ºè­°ï¼å¦æææä¾é ç®ç¯åï¼
-7. æ³¨æäºé 
+請幫我規劃一個完整的活動企劃，包含以下內容：
+1. 活動主題與名稱
+2. 活動核心賣點（3-5個）
+3. 執行排程（活動前、活動中、活動後）
+4. 宣傳文案（可以成人向，符合酒店業風格）
+5. Call客策略（怎麼讓老客人回來）
+6. 預算建議（如果有提供預算範圍）
+7. 注意事項
 
-èªæ°£è¦å°æ¥­ä½æ¥å°æ°£ï¼åæ¯èæå¨è·æ°äººåäº«ç¶é©ã
-å§å®¹å¯ä»¥æäººåï¼ç¬¦åå«å¤§è¡æ¥­éåºçå¯¦ééæ±ã`;
+語氣要專業但接地氣，像是老手在跟新人分享經驗。
+內容可以成人向，符合八大行業酒店的實際需求。`;
 
-      const userPrompt = `æ´»åé¡åï¼${input.eventType}
-${input.duration ? `æ´»åæéï¼${input.duration}` : ""}
-${input.budget ? `é ç®ç¯åï¼${input.budget}` : ""}
-${input.targetAudience ? `ç®æ¨å®¢ç¾¤ï¼${input.targetAudience}` : ""}
-${input.specialRequirements ? `ç¹æ®éæ±ï¼${input.specialRequirements}` : ""}
+      const userPrompt = `活動類型：${input.eventType}
+${input.duration ? `活動期間：${input.duration}` : ""}
+${input.budget ? `預算範圍：${input.budget}` : ""}
+${input.targetAudience ? `目標客群：${input.targetAudience}` : ""}
+${input.specialRequirements ? `特殊需求：${input.specialRequirements}` : ""}
 
-è«çµ¦æä¸ä»½å®æ´çæ´»åä¼åã`;
+請給我一份完整的活動企劃。`;
 
       const libraryBlock = input.librarySamples && input.librarySamples.length > 0
         ? "\n\n══ 使用者過去的活動企劃範本 ══\n請深度參考這些過去企劃的格式、章節結構、用字風格、執行節奏，讓新企劃跟店裡 SOP 一致：\n" +
@@ -1616,7 +1617,7 @@ FINAL REMINDERS (non-negotiable):
       const imageDataUrl = await geminiGenerateImage(ctx.env.GEMINI_API_KEY, imagePrompt, refs);
 
       if (!imageDataUrl) {
-        throw new Error("åççæå¤±æãImagen 4 éè¦ Google AI ä»è²»æ¹æ¡ï¼è«å° https://ai.dev/projects åç´å¾åè©¦ã");
+        throw new Error("圖片生成失敗。Imagen 4 需要 Google AI 付費方案，請到 https://ai.dev/projects 升級後再試。");
       }
 
       return { imageBase64: imageDataUrl };
@@ -1710,14 +1711,45 @@ const suggestionsRouter = router({
   create: publicProcedure
     .input(
       z.object({
-        nickname: z.string().min(1, "è«è¼¸å¥æ±ç¨±").max(100),
+        nickname: z.string().min(1, "請輸入暱稱").max(100),
         category: z.enum(["feature", "bug", "design", "content", "other"]).default("other"),
-        content: z.string().min(1, "è«è¼¸å¥å»ºè­°å§å®¹").max(2000),
+        content: z.string().min(1, "請輸入建議內容").max(2000),
       })
     )
     .mutation(async ({ input }) => {
       console.log("[Suggestions] Created:", { ...input });
       return { success: true };
+    }),
+});
+
+// ===== Feedback Router =====
+const feedbackRouter = router({
+  status: publicProcedure.query(({ ctx }) => ({
+    configured: !!ctx.env.DB,
+  })),
+
+  submit: publicProcedure
+    .input(z.object({
+      tool: z.string(),
+      toolContext: z.string().optional(),
+      outputText: z.string(),
+      rating: z.enum(['up', 'down', 'gold']),
+      userName: z.string().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const db = ctx.env.DB as any;
+      if (!db) return { success: false, stored: false };
+      const id = `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
+      await db.prepare(
+        `INSERT INTO feedback (id, output_id, rating, tool, created_at) VALUES (?, ?, ?, ?, datetime('now'))`
+      ).bind(id, `adhoc_${id}`, input.rating, input.tool).run();
+      if (input.rating === 'gold') {
+        const gid = `g_${id}`;
+        await db.prepare(
+          `INSERT INTO gold_library (id, content, tool, created_at) VALUES (?, ?, ?, datetime('now'))`
+        ).bind(gid, input.outputText, input.tool).run();
+      }
+      return { success: true, stored: true };
     }),
 });
 
@@ -1728,6 +1760,7 @@ const appRouter = router({
   poster: posterRouter,
   suggestions: suggestionsRouter,
   recruit: recruitRouter,
+  feedback: feedbackRouter,
 });
 
 export type AppRouter = typeof appRouter;

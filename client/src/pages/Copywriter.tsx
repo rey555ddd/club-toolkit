@@ -4,6 +4,8 @@ import { getTextSamples } from "@/lib/library";
 import { toast } from "sonner";
 import { FileText, Copy, RefreshCw, ChevronDown, ChevronUp, Check } from "lucide-react";
 import { Streamdown } from "streamdown";
+import FeedbackBar from "@/components/FeedbackBar";
+import LoadingBanner from "@/components/LoadingBanner";
 
 type CopyType = "recruitment" | "social" | "event" | "lady_recruitment" | "call_client";
 type Hotel = "chinatown" | "dihao" | "both";
@@ -478,20 +480,17 @@ export default function Copywriter() {
 
             <div className="flex-1 p-5 overflow-auto scrollbar-gold">
               {generateMutation.isPending ? (
-                <div className="flex flex-col items-center justify-center h-full gap-4">
-                  <div
-                    className="w-10 h-10 rounded-full border-2 border-t-transparent animate-spin"
-                    style={{ borderColor: "rgba(201,168,76,0.5)", borderTopColor: "transparent" }}
-                  />
-                  <p className="text-sm" style={{ color: "rgba(255,255,255,0.35)" }}>
-                    AI 正在撰寫文案...
-                  </p>
-                </div>
+                <LoadingBanner message="Gemini AI 生成文案中..." />
               ) : result ? (
                 <div className="space-y-4">
                   <div className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.85)" }}>
                     <Streamdown>{result}</Streamdown>
                   </div>
+                  <FeedbackBar
+                    tool="copywriter"
+                    toolContext={`${selectedType ?? ""} / ${selectedPlatform}`}
+                    outputText={result}
+                  />
                   <div className="p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
                     <label className="text-xs block mb-2" style={{ color: "rgba(255,255,255,0.55)" }}>
                       ✏️ 修改指令（例：更口語、縮短一半、加上數字說服力、改用 Dcard 語氣）
