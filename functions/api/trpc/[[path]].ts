@@ -951,6 +951,7 @@ async function geminiGenerateImage(
   const refNote = refs.length
     ? `\n\nReference guidance from uploaded materials: ${refs.map((r) => r.label).join("; ")}. Do not copy any real face exactly.`
     : "";
+  const safePrompt = sanitizeOpenAIImagePrompt(`${prompt}${refNote}`);
 
   const response = await fetch("https://api.openai.com/v1/images/generations", {
     method: "POST",
@@ -960,7 +961,7 @@ async function geminiGenerateImage(
     },
     body: JSON.stringify({
       model: "gpt-image-2",
-      prompt: `${prompt}${refNote}`,
+      prompt: safePrompt,
       size: "1024x1536",
       quality: "medium",
     }),
@@ -991,6 +992,31 @@ async function geminiGenerateImage(
 
   console.error("[OpenAI Image] No base64 image returned");
   return null;
+}
+
+function sanitizeOpenAIImagePrompt(prompt: string): string {
+  const replacements: Array<[RegExp, string]> = [
+    [/hostess/gi, "event staff member"],
+    [/sexy|seductive|sultry|hot-girl|辣妹|性感|火辣/gi, "elegant"],
+    [/cleavage|low-cut|deep-V|backless|bikini|sheer|see-through|revealing|exposure/gi, "fully covered formalwear"],
+    [/figure-hugging|bodycon|tight-fitting/gi, "tailored formal"],
+    [/nightlife sex-appeal/gi, "premium nightlife style"],
+    [/not vulgar or pornographic/gi, "safe commercial advertising"],
+    [/八大/gi, "premium entertainment venue"],
+  ];
+
+  let safe = prompt;
+  for (const [pattern, replacement] of replacements) {
+    safe = safe.replace(pattern, replacement);
+  }
+
+  return `${safe}
+
+SAFETY REQUIREMENTS FOR IMAGE GENERATION:
+- Create a safe commercial event poster for an adult venue, not sexual content.
+- All people must be adults, fully clothed, and posed professionally.
+- No nudity, no lingerie, no suggestive touching, no sexualized pose, no exposed cleavage.
+- Premium hotel lounge / event marketing aesthetic, elegant formalwear, tasteful lighting.`;
 }
 
 // ===== Router: Copywriter =====
