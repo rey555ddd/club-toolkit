@@ -948,7 +948,7 @@ async function requestOpenAIImage(apiKey: string, prompt: string): Promise<strin
     },
     body: JSON.stringify({
       model: "gpt-image-2",
-      prompt: safePrompt,
+      prompt,
       size: "1024x1536",
       quality: "medium",
     }),
