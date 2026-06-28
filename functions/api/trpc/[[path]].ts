@@ -978,6 +978,16 @@ async function geminiGenerateImage(
   };
   const item = data.data?.[0];
   if (item?.b64_json) return `data:image/png;base64,${item.b64_json}`;
+  if (item?.url) {
+    const imgRes = await fetch(item.url);
+    if (!imgRes.ok) {
+      throw new Error(`OpenAI 圖片下載失敗 (${imgRes.status})`);
+    }
+    const bytes = new Uint8Array(await imgRes.arrayBuffer());
+    let binary = "";
+    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+    return `data:image/png;base64,${btoa(binary)}`;
+  }
 
   console.error("[OpenAI Image] No base64 image returned");
   return null;
