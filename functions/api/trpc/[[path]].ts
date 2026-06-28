@@ -679,6 +679,7 @@ const withMarketing = (prompt: string) => {
 interface Env {
   GEMINI_API_KEY: string;
   ANTHROPIC_API_KEY?: string;
+  OPENAI_API_KEY?: string;
   DB?: D1Database;
 }
 
@@ -943,30 +944,42 @@ async function geminiGenerateImage(
   prompt: string,
   refs: RefImage[] = []
 ): Promise<string | null> {
-  if (refs.length > 0) {
-    console.log(`[Image] ${refs.length} reference image(s) attached, using multimodal`);
-    const r = await tryGeminiImageModel(apiKey, prompt, refs);
-    if (r) return r;
-    console.log("[Image] gemini-2.5-flash-image failed, trying gemini-2.0-flash-lite multimodal");
-    const r2 = await tryGemini20ImageModel(apiKey, prompt, refs);
-    if (r2) return r2;
-    console.error("[Image] All multimodal models failed");
+  if (!apiKey) {
+    throw new Error("OPENAI_API_KEY 未設定，請在 Cloudflare Pages 環境變數中配置");
+  }
+
+  const refNote = refs.length
+    ? `\n\nReference guidance from uploaded materials: ${refs.map((r) => r.label).join("; ")}. Do not copy any real face exactly.`
+    : "";
+
+  const response = await fetch("https://api.openai.com/v1/images/generations", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: "gpt-image-2",
+      prompt: `${prompt}${refNote}`,
+      size: "1024x1536",
+      quality: "medium",
+    }),
+    signal: AbortSignal.timeout(120000),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    console.error("[OpenAI Image] API error:", response.status, errText.substring(0, 500));
     return null;
   }
 
-  console.log("[Image] Trying Imagen 4 (text-to-image)");
-  const imagen4Result = await tryImagen4(apiKey, prompt);
-  if (imagen4Result) return imagen4Result;
+  const data = await response.json() as {
+    data?: Array<{ b64_json?: string; url?: string }>;
+  };
+  const item = data.data?.[0];
+  if (item?.b64_json) return `data:image/png;base64,${item.b64_json}`;
 
-  console.log("[Image] Imagen 4 failed, trying gemini-2.5-flash-image");
-  const geminiImageResult = await tryGeminiImageModel(apiKey, prompt);
-  if (geminiImageResult) return geminiImageResult;
-
-  console.log("[Image] Trying gemini-2.0-flash-lite fallback");
-  const gemini20Result = await tryGemini20ImageModel(apiKey, prompt);
-  if (gemini20Result) return gemini20Result;
-
-  console.error("[Image] All image generation methods failed");
+  console.error("[OpenAI Image] No base64 image returned");
   return null;
 }
 
@@ -1623,10 +1636,10 @@ FINAL REMINDERS (non-negotiable):
         refs.push(...autoRefs);
       }
 
-      const imageDataUrl = await geminiGenerateImage(ctx.env.GEMINI_API_KEY, imagePrompt, refs);
+      const imageDataUrl = await geminiGenerateImage(ctx.env.OPENAI_API_KEY, imagePrompt, refs);
 
       if (!imageDataUrl) {
-        throw new Error("圖片生成失敗。Imagen 4 需要 Google AI 付費方案，請到 https://ai.dev/projects 升級後再試。");
+        throw new Error("圖片生成失敗。請確認 OPENAI_API_KEY 與 gpt-image-2 權限設定。");
       }
 
       return { imageBase64: imageDataUrl };
