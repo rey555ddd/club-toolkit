@@ -995,28 +995,20 @@ async function geminiGenerateImage(
 }
 
 function sanitizeOpenAIImagePrompt(prompt: string): string {
-  const replacements: Array<[RegExp, string]> = [
-    [/hostess/gi, "event staff member"],
-    [/sexy|seductive|sultry|hot-girl|辣妹|性感|火辣/gi, "elegant"],
-    [/cleavage|low-cut|deep-V|backless|bikini|sheer|see-through|revealing|exposure/gi, "fully covered formalwear"],
-    [/figure-hugging|bodycon|tight-fitting/gi, "tailored formal"],
-    [/nightlife sex-appeal/gi, "premium nightlife style"],
-    [/not vulgar or pornographic/gi, "safe commercial advertising"],
-    [/八大/gi, "premium entertainment venue"],
-  ];
+  const themeMatch = prompt.match(/Event theme:\s*([^\n.]+)/i);
+  const styleMatch = prompt.match(/Style:\s*([^\n.]+)/i);
+  const settingMatch = prompt.match(/Setting:\s*([^\n.]+)/i);
 
-  let safe = prompt;
-  for (const [pattern, replacement] of replacements) {
-    safe = safe.replace(pattern, replacement);
-  }
+  const theme = themeMatch?.[1]?.trim() || "premium evening event";
+  const style = styleMatch?.[1]?.trim() || "modern minimalist luxury style";
+  const setting = settingMatch?.[1]?.trim() || "elegant hotel lounge interior";
 
-  return `${safe}
-
-SAFETY REQUIREMENTS FOR IMAGE GENERATION:
-- Create a safe commercial event poster for an adult venue, not sexual content.
-- All people must be adults, fully clothed, and posed professionally.
-- No nudity, no lingerie, no suggestive touching, no sexualized pose, no exposed cleavage.
-- Premium hotel lounge / event marketing aesthetic, elegant formalwear, tasteful lighting.`;
+  return `Safe commercial event poster background for a premium hotel lounge.
+Theme: ${theme}.
+Visual style: ${style}.
+Setting: ${setting}.
+Create a vertical 3:4 poster-ready image with elegant lighting, polished interior decor, refined bar or lounge details, tasteful gold accents, and clear negative space for later text overlay.
+No people, no human bodies, no faces, no suggestive content, no alcohol consumption scene, no nudity, no sexualized pose, no lingerie. Safe luxury hospitality marketing aesthetic only.`;
 }
 
 // ===== Router: Copywriter =====
