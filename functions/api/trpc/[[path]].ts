@@ -970,7 +970,7 @@ async function geminiGenerateImage(
   if (!response.ok) {
     const errText = await response.text();
     console.error("[OpenAI Image] API error:", response.status, errText.substring(0, 500));
-    return null;
+    throw new Error(`OpenAI 圖片 API 錯誤 (${response.status}): ${errText.slice(0, 500)}`);
   }
 
   const data = await response.json() as {
