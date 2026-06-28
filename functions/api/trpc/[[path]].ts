@@ -678,6 +678,7 @@ const withMarketing = (prompt: string) => {
 // ===== Types & Interfaces =====
 interface Env {
   GEMINI_API_KEY: string;
+  ANTHROPIC_API_KEY?: string;
   DB?: D1Database;
 }
 
@@ -700,14 +701,10 @@ const publicProcedure = t.procedure;
 
 // ===== Gemini Helpers =====
 
-function getGeminiClient(apiKey: string) {
-  return new GoogleGenerativeAI(apiKey);
-}
-
-const TEXT_MODELS = ["gemini-2.5-flash", "gemini-2.0-flash-lite", "gemini-2.5-flash-lite"];
+const CLAUDE_TEXT_MODEL = "claude-sonnet-4-6";
 
 async function geminiGenerateText(
-  apiKey: string,
+  apiKey: string | undefined,
   {
     systemPrompt,
     userPrompt,
@@ -716,27 +713,39 @@ async function geminiGenerateText(
     userPrompt: string;
   }
 ): Promise<string> {
-  const client = getGeminiClient(apiKey);
-  let lastError: unknown;
-  for (const modelName of TEXT_MODELS) {
-    try {
-      const model = client.getGenerativeModel({
-        model: modelName,
-        systemInstruction: systemPrompt,
-      });
-      const result = await model.generateContent(userPrompt);
-      return result.response.text();
-    } catch (err: unknown) {
-      lastError = err;
-      const msg = err instanceof Error ? err.message : String(err);
-      if (msg.includes("503") || msg.includes("404") || msg.includes("overloaded") || msg.includes("high demand") || msg.includes("no longer available")) {
-        console.log(`Model ${modelName} overloaded, trying next fallback...`);
-        continue;
-      }
-      throw err; // non-503 errors should not be retried
-    }
+  if (!apiKey) {
+    throw new Error("ANTHROPIC_API_KEY 未設定，請在 Cloudflare Pages 環境變數中配置");
   }
-  throw lastError;
+
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-API-Key": apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model: CLAUDE_TEXT_MODEL,
+      max_tokens: 1600,
+      temperature: 0.75,
+      system: systemPrompt,
+      messages: [{ role: "user", content: userPrompt }],
+    }),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Claude API 錯誤 (${res.status}): ${errText}`);
+  }
+
+  const data = await res.json() as any;
+  const text = data?.content
+    ?.map((part: any) => part?.type === "text" ? part.text : "")
+    .join("")
+    .trim();
+
+  if (!text) throw new Error("Claude 未返回有效文字");
+  return text;
 }
 
 async function tryImagen4(apiKey: string, prompt: string): Promise<string | null> {
@@ -1082,7 +1091,7 @@ const copywriterRouter = router({
 【行銷 4 有自檢】
 有哏：讓人想停下來看 / 有關：跟目標受眾的生活有關 / 有感：引起情緒共鳴 / 有想要：看完想行動
 ` + elementsText + customText + libraryText;
-      const content = await geminiGenerateText(ctx.env.GEMINI_API_KEY, { systemPrompt: withMarketing(systemPrompt), userPrompt: "請幫我寫一篇" + typeLabels[input.type] + "，發布在" + platformInfo.label + "。字數控制在" + platformInfo.length + "。精簡有力，每個字都要有用。直接輸出文案，不要任何前言、說明、或「以下是文案」之類的開場。",
+      const content = await geminiGenerateText(ctx.env.ANTHROPIC_API_KEY, { systemPrompt: withMarketing(systemPrompt), userPrompt: "請幫我寫一篇" + typeLabels[input.type] + "，發布在" + platformInfo.label + "。字數控制在" + platformInfo.length + "。精簡有力，每個字都要有用。直接輸出文案，不要任何前言、說明、或「以下是文案」之類的開場。",
       });
 
       return { content };
@@ -1162,7 +1171,7 @@ ${input.librarySamples && input.librarySamples.length > 0
     "\n══════════════════"
   : ""}`;
 
-      const content = await geminiGenerateText(ctx.env.GEMINI_API_KEY, {
+      const content = await geminiGenerateText(ctx.env.ANTHROPIC_API_KEY, {
         systemPrompt: withMarketing(systemPrompt),
         userPrompt: `請幫我寫一篇${positionMap[input.position]}徵才文案，發布在${ch.label}。嚴格遵守上述痛點反轉心法。直接輸出文案，不要任何前言或說明。`,
       });
@@ -1226,7 +1235,7 @@ ${input.librarySamples && input.librarySamples.length > 0
         ? `以下是到目前的對話紀錄：\n\n${convoText}\n\n請你以『助手』的身份繼續回應老闆最新的這一則訊息。直接輸出回答，不要重複對話紀錄。`
         : lastUser;
 
-      const content = await geminiGenerateText(ctx.env.GEMINI_API_KEY, {
+      const content = await geminiGenerateText(ctx.env.ANTHROPIC_API_KEY, {
         systemPrompt,
         userPrompt,
       });
@@ -1261,7 +1270,7 @@ ${input.librarySamples && input.librarySamples.length > 0
 
 ${input.customNote ? "使用者補充：" + input.customNote : ""}`;
 
-      const content = await geminiGenerateText(ctx.env.GEMINI_API_KEY, {
+      const content = await geminiGenerateText(ctx.env.ANTHROPIC_API_KEY, {
         systemPrompt: withMarketing(systemPrompt),
         userPrompt: "請幫我寫這則群組激勵訊息。直接輸出，不要前言說明。",
       });
@@ -1321,7 +1330,7 @@ ${input.specialRequirements ? `特殊需求：${input.specialRequirements}` : ""
           input.librarySamples.map((s, i) => `\n【範本 ${i + 1}：${s.name}】\n${s.content}`).join("\n") + "\n══════════════════"
         : "";
 
-      const content = await geminiGenerateText(ctx.env.GEMINI_API_KEY, {
+      const content = await geminiGenerateText(ctx.env.ANTHROPIC_API_KEY, {
         systemPrompt: withMarketing(systemPrompt + libraryBlock),
         userPrompt,
       });
@@ -1666,7 +1675,7 @@ FINAL REMINDERS (non-negotiable):
 活動主題：${input.theme}
 ${input.features.length > 0 ? `內容特色：${input.features.join("、")}` : ""}`;
 
-      const content = await geminiGenerateText(ctx.env.GEMINI_API_KEY, { systemPrompt: withMarketing(systemPrompt), userPrompt,
+      const content = await geminiGenerateText(ctx.env.ANTHROPIC_API_KEY, { systemPrompt: withMarketing(systemPrompt), userPrompt,
       });
 
       try {
