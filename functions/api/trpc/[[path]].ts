@@ -939,20 +939,7 @@ async function tryGemini20ImageModel(
   }
 }
 
-async function geminiGenerateImage(
-  apiKey: string,
-  prompt: string,
-  refs: RefImage[] = []
-): Promise<string | null> {
-  if (!apiKey) {
-    throw new Error("OPENAI_API_KEY 未設定，請在 Cloudflare Pages 環境變數中配置");
-  }
-
-  const refNote = refs.length
-    ? `\n\nReference guidance from uploaded materials: ${refs.map((r) => r.label).join("; ")}. Do not copy any real face exactly.`
-    : "";
-  const safePrompt = sanitizeOpenAIImagePrompt(`${prompt}${refNote}`);
-
+async function requestOpenAIImage(apiKey: string, prompt: string): Promise<string | null> {
   const response = await fetch("https://api.openai.com/v1/images/generations", {
     method: "POST",
     headers: {
@@ -994,14 +981,64 @@ async function geminiGenerateImage(
   return null;
 }
 
-function sanitizeOpenAIImagePrompt(prompt: string): string {
+async function geminiGenerateImage(
+  apiKey: string,
+  prompt: string,
+  refs: RefImage[] = []
+): Promise<string | null> {
+  if (!apiKey) {
+    throw new Error("OPENAI_API_KEY 未設定，請在 Cloudflare Pages 環境變數中配置");
+  }
+
+  const refNote = refs.length
+    ? `\n\nReference guidance from uploaded materials: ${refs.map((r) => r.label).join("; ")}. Do not copy any real face exactly.`
+    : "";
+  const basePrompt = `${prompt}${refNote}`;
+  const peoplePrompt = sanitizeOpenAIImagePrompt(basePrompt, { allowPeople: true });
+
+  try {
+    return await requestOpenAIImage(apiKey, peoplePrompt);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    const isSafetyBlock =
+      /moderation|safety|sexual|violence|blocked|policy/i.test(message);
+    if (!isSafetyBlock) throw e;
+
+    console.warn("[OpenAI Image] People poster blocked by safety filter; retrying safe background fallback.");
+    const backgroundPrompt = sanitizeOpenAIImagePrompt(basePrompt, { allowPeople: false });
+    return await requestOpenAIImage(apiKey, backgroundPrompt);
+  }
+}
+
+function sanitizeOpenAIImagePrompt(
+  prompt: string,
+  options: { allowPeople: boolean } = { allowPeople: false }
+): string {
   const themeMatch = prompt.match(/Event theme:\s*([^\n.]+)/i);
   const styleMatch = prompt.match(/Style:\s*([^\n.]+)/i);
   const settingMatch = prompt.match(/Setting:\s*([^\n.]+)/i);
+  const countMatch = prompt.match(/EXACTLY\s+(\d+)\s+(?:Taiwanese\s+)?(?:women|people|persons)/i);
 
   const theme = themeMatch?.[1]?.trim() || "premium evening event";
   const style = styleMatch?.[1]?.trim() || "modern minimalist luxury style";
   const setting = settingMatch?.[1]?.trim() || "elegant hotel lounge interior";
+  const peopleCount = Math.min(Number(countMatch?.[1] || 1), 4);
+
+  const sharedRules = `Theme: ${theme}.
+Visual style: ${style}.
+Setting: ${setting}.
+Create a vertical 3:4 poster-ready image with elegant lighting, polished interior decor, refined lounge details, tasteful gold accents, and clear negative space for later text overlay.
+Safe luxury hospitality marketing aesthetic only.
+No nudity, no lingerie, no cleavage emphasis, no suggestive content, no sexualized pose, no kissing, no intimate touching, no alcohol consumption scene, no intoxication, no explicit nightclub or adult-entertainment cues.`;
+
+  if (options.allowPeople) {
+    return `Safe commercial event poster for a premium hotel hospitality event.
+${sharedRules}
+Include ${peopleCount === 1 ? "one" : peopleCount} adult Taiwanese East Asian hospitality staff member${peopleCount === 1 ? "" : "s"}, age 25+, in elegant full-coverage formal eveningwear.
+People should look professional, warm, refined, and approachable, with natural smiles and fully visible faces.
+Use tasteful non-revealing dresses or tailored formal outfits, neutral standing poses, and a polished hotel-lounge atmosphere.
+The image must feel like a mainstream hotel event poster, suitable for workplace marketing review.`;
+  }
 
   return `Safe commercial event poster background for a premium hotel lounge.
 Theme: ${theme}.
