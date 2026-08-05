@@ -1552,62 +1552,12 @@ The goal: each woman looks like a separate real Taiwanese individual you could r
 
       const framingClause = "CRITICAL FRAMING RULE — ALL faces must be FULLY VISIBLE within the frame. NEVER crop, cut off, or partially hide any face at the edges of the poster. Every person's complete face (forehead, eyes, nose, mouth, chin) must be entirely inside the composition. Leave adequate margin between each face and the edge of the image. If necessary, zoom out or rearrange the composition to include everyone's full face. Face cropping is strictly forbidden.";
 
-      const naturalismClause = `#1 TOP PRIORITY RULE — ANTI-PERFECTION / NON-NEGOTIABLE
-
-The generated image MUST NOT look like an AI-generated beauty ad. Every woman's face must look like a REAL photographed human from a candid phone snapshot — NOT a glamour render, NOT a CGI avatar, NOT a polished magazine shot, NOT Instagram-filtered.
-
-HARD REJECT any of these 'AI tells':
-- Symmetrical doll faces
-- Airbrushed porcelain skin with no pores or texture
-- Perfectly aligned teeth, perfectly plucked brows, perfectly even makeup
-- Identical beauty-level across all faces
-- Glowing 'beauty mode' lighting with no real shadows
-- Hair that looks like a shiny helmet with zero stray strands
-
-MANDATORY imperfection budget (must be visible in the final image):
-- At least one girl's skin shows actual pores, slight oiliness, mild unevenness, or faint blemishes
-- At least one girl has visible facial asymmetry (eyes not identical, eyebrows slightly different, mouth slightly tilted)
-- At least one girl has a small realistic 'flaw': tired under-eye, slight acne mark, slightly chapped lips, a baby hair sticking out, a stray eyelash
-- Lighting has REAL shadow gradation on faces — one side slightly shadowed like real studio photography
-
-The target aesthetic is 'candid real-life Taiwan hostess group photo taken on iPhone', NOT 'AI beauty generator'.
-
----
-
-Real humans have:
-- VISIBLE skin texture: pores, fine lines, subtle acne scars, faint freckles, peach fuzz, slight redness around nose/cheeks, minor blemishes. NO plastic/CGI smooth skin allowed.
-- NATURAL asymmetry: eyes slightly uneven size, eyebrows not identical shape, smile slightly tilted, one side of face different from the other. Real faces are never symmetrical.
-- REAL teeth: not Photoshop-white; slight natural off-white, tiny gaps or overlap, slight imperfections. No 'toothpaste ad' teeth.
-- REAL hair: individual strands visible, flyaways, slightly messy edges, roots showing if dyed, not a 'helmet of perfection'.
-- REAL lighting: visible shadow gradation, catchlights in eyes from actual light sources, specular highlights on skin from sweat/oil, NOT flat beauty-mode glow.
-
-${selectedCount > 1 ? `CHARACTER DIVERSITY OF BEAUTY — with ${selectedCount} people in frame, keep every selected fictional character clearly distinct and recognizable. Include natural human texture and variation without changing their locked identities:
-- Plain girl-next-door features, 6-7/10 attractiveness (NOT 9-10/10)
-- Smaller or narrower eyes, wider/flatter nose, less defined cheekbones
-- Thinner or less plump lips
-- Visible skin texture: mild acne, dark under-eye circles, dull patches, enlarged pores
-- More relaxed/casual/awkward body posture (not a model-like pose)
-
-CRITICAL — the ORDINARY ones MUST STILL have FULL nightclub 八大 風塵 makeup (they are working hostesses, not off-duty girls):
-- Heavy defined eye makeup (smoky eyeshadow, thick eyeliner, false lashes or strong feather lashes)
-- Bold lip color (deep red / mauve / glossy pink — NOT bare natural lips)
-- Full contour, nose shadow, blush
-- Styled hair (not plain / loose)
-- Their face may be ordinary but their MAKEUP is full-on 八大 nightlife level
-The look: 'ordinary-featured girl with heavy nightclub makeup on' — this is the authentic Taiwanese 八大 vibe. Plain face + full hostess glam = real hostess energy.
-
-A frame full of only 10/10 beauties screams 'AI-generated fake'. Real 八大 team photos ALWAYS have variety in looks — but ALL with heavy makeup. Do not skip this rule.` : `Include real human imperfections — small flaws (tiny blemish, slight asymmetry, relatable expression) increase believability. Keep full 八大 nightclub makeup regardless.`}
-
-BODY STANDARD — ALL women in this shot, however imperfect their face, must have a SLIM / SLENDER body. Nightclub hostesses MUST be slim. NO:
-- No chubby, fat, or overweight women
-- No round puffy faces, no double chin, no full/wide jaw
-- No thick arms, no thick waist, no wide torso
-- Faces should be oval, V-line, heart-shaped, or softly angular — NEVER round or chubby
-All must have slim waist, slender arms, defined collarbone, good posture. This is a non-negotiable body requirement even when varying beauty levels.
-
-OUTFIT EXPOSURE — outfits should be a bit more revealing and seductive (nightclub hostess style): slightly lower necklines showing collarbone and upper chest, figure-hugging silhouettes that emphasize the waist and hips, shorter hem lengths showing legs, tasteful cleavage or backless details, small cut-outs or sheer panels where appropriate. Tasteful and alluring, NOT vulgar or pornographic — think upscale 八大 nightlife fashion (sexy but classy).
-
-The target is: people viewing the poster should think 'these are real Taiwanese hostesses photographed at the venue', NOT 'this is AI-generated'. Think real Taiwan IG candid shots and real team group photos — 70% polished, 30% raw reality.`;
+      const naturalismClause = `FACE QUALITY — every selected fictional character must remain attractive, healthy, youthful and recognizable from her attached reference.
+Use natural premium beauty photography: softly detailed skin with subtle pores, even complexion, lively eyes with clean catchlights, relaxed facial muscles, flattering jawline, tidy makeup and healthy hair strands.
+Expressions must feel warm and confident. Avoid blank stares, tired eyes, harsh asymmetry, swollen features, uncanny smiles, distorted teeth, deep eye bags, acne emphasis, greasy highlights, waxy skin, mannequin faces and horror-like shadows.
+For group scenes, preserve a different recognizable face and hairstyle for each woman. Never merge faces or create twin-like copies.
+Lighting should be soft frontal portrait lighting with gentle fill, while the venue remains cinematic. Faces are the visual priority and must be clean, balanced and flattering.
+Bodies remain naturally proportioned, elegant and long-legged. Wardrobe may be glamorous and figure-flattering, but always commercial and tasteful.`;
 
       const referencePosterClause = input.referencePosterUrl
         ? "REFERENCE POSTER — the user has uploaded an existing poster as reference. Study its overall composition, color palette, mood, lighting style, decorative elements, and layout. Generate the new poster with a strong visual resemblance to the reference poster's design language (same typography vibe, similar background treatment, similar dressing style and pose energy), while keeping ALL the Taiwan ethnicity/age/skin rules."
@@ -1682,7 +1632,7 @@ FINAL REMINDERS (non-negotiable):
 1. Persons MUST be Taiwanese (East Asian / Han Chinese / Taiwanese) — no Western, blonde, platinum, or mixed-race looks
 2. Women only. No men, male customers, male staff, boyfriends, or mixed-gender crowd anywhere in the image.
 3. ${selectedCount > 1 ? `EXACTLY ${selectedCount} women in the shot, EACH matching her attached fictional character reference with a clearly distinct face and hairstyle.` : "Face must look like a real photographed human, NOT AI-perfect."}
-4. Visible skin texture, pores, asymmetry, and small imperfections are REQUIRED. Reject doll-like airbrushed faces.
+4. Faces must be attractive, healthy and naturally photographed, with lively eyes and flattering soft portrait light. Reject uncanny, tired, distorted or horror-like faces.
 5. Aesthetic target: candid iPhone-shot Taiwan nightclub team photo, NOT AI beauty render.`;
       }
 

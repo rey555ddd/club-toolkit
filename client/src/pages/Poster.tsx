@@ -823,6 +823,18 @@ export default function Poster() {
       return;
     }
 
+    const hotelCopy: Record<Hotel, { subtitle: string; info: string }> = {
+      chinatown: { subtitle: "中國城經典酒店", info: "桃園市復興路 99 號 8F · 03-339-2188" },
+      dihao: { subtitle: "帝豪酒店", info: "桃園市復興路 99 號 6F · 03-339-3666" },
+      both: { subtitle: "中國城 × 帝豪酒店", info: "桃園市復興路 99 號 · VIP 訂位" },
+    };
+    setPosterText((current) => ({
+      title: current.title.trim() || theme.slice(0, 15),
+      subtitle: current.subtitle.trim() || hotelCopy[selectedHotel].subtitle,
+      info: current.info.trim() || hotelCopy[selectedHotel].info,
+      cta: current.cta.trim() || "今晚訂位",
+    }));
+
     const merged = [customPrompt, extraInstruction ?? refineInstruction]
       .filter((s) => s && s.trim())
       .join("。")
