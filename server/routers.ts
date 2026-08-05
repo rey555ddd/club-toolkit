@@ -158,6 +158,7 @@ const posterRouter = router({
         uploadedPhotoUrl: z.string().optional(),
         referencePosterUrl: z.string().optional(),
         personCount: z.number().min(1).max(6).default(1),
+        selectedCharacterIds: z.array(z.enum(["ct-a01", "ct-a02", "ct-a03", "ct-a04", "ct-a05", "ct-a06"])).max(4).default([]),
         customPrompt: z.string().optional(),
         effects: z.array(z.string()).default([]),
         personStyle: z.enum(["elegant", "sweet", "fashionable", "graceful", "cool", "sexy"]).optional(),
@@ -185,8 +186,8 @@ const posterRouter = router({
         sweet: "a Taiwanese female hostess, East Asian (Han Chinese / Taiwanese) ethnicity, sweet 甜美網美 (Taiwan sweet girl-next-door influencer) aesthetic, shoulder-length wavy black or dark brown hair, fair skin with healthy glow, large almond eyes, puppy-dog eyeliner, natural pink cheeks, glossy pink lips, wearing a chic cocktail dress, youthful approachable Taiwanese girl look",
         fashionable: "a Taiwanese female hostess, East Asian (Han Chinese / Taiwanese) ethnicity, trendy 時尚網美 (Taiwan fashion influencer) aesthetic, styled wavy or sleek hair often with caramel / highlighted tones, fair skin, sharp defined eye makeup, bold lips, wearing contemporary designer outfit, modern chic Taiwanese influencer look",
         graceful: "a Taiwanese female hostess, East Asian (Han Chinese / Taiwanese) ethnicity, graceful 氣質女神 (Taiwan goddess) aesthetic, long flowing straight black hair, pale porcelain skin, delicate refined facial features typical of classic Taiwanese beauty, soft shimmer eyeshadow, gentle pink lips, wearing a classic evening dress, cultured refined Taiwanese hostess look",
-        cool: "a Taiwanese female hostess, East Asian (Han Chinese / Taiwanese) ethnicity, bold 辣妹 (Taiwan hot-girl / 八大辣妹) nightlife aesthetic, long dyed hair (platinum, caramel, or deep chestnut) in Taiwan hot-girl styling, light olive skin with bronze glow, dramatic smoky eye makeup, feather lashes, nose contour, bold lips, wearing a figure-hugging sleek evening outfit, confident sultry Taiwanese 辣妹 look",
-        sexy: "a Taiwanese female hostess, East Asian (Han Chinese / Taiwanese) ethnicity, sexy 性感火辣 (Taiwan seductive hot-girl) aesthetic, long wavy glossy hair, toned curvy feminine figure, fair to light olive skin, sultry eye makeup, plump glossy lips, wearing a figure-flattering low-cut or body-con evening dress (tasteful elegant sexy, not vulgar), confident flirty expression, Taiwanese 八大 nightlife sex-appeal look, commercial fashion editorial quality",
+        cool: "a Taiwanese female hostess, East Asian (Han Chinese / Taiwanese) ethnicity, bold 辣妹 (Taiwan hot-girl / 八大辣妹) nightlife aesthetic, long dyed hair (platinum, caramel, or deep chestnut) in Taiwan hot-girl styling, light olive skin with bronze glow, dramatic smoky eye makeup, feather lashes, nose contour, bold lips, curvy hourglass figure with fuller bust and slim waist, wearing a figure-hugging sleek evening outfit with a small tasteful hint of cleavage, confident sultry Taiwanese 辣妹 look, sexy but elegant commercial poster quality",
+        sexy: "a Taiwanese female hostess, East Asian (Han Chinese / Taiwanese) ethnicity, sexy 性感火辣 (Taiwan seductive hot-girl) aesthetic, long wavy glossy hair, curvy hourglass feminine figure, fuller bust, slim waist, defined hips, fair to light olive skin, sultry eye makeup, plump glossy lips, wearing a figure-flattering low-cut or body-con evening dress with subtle tasteful cleavage (elegant sexy, not vulgar, not pornographic), confident flirty expression, Taiwanese 八大 nightlife sex-appeal look, commercial fashion editorial quality",
       };
 
       // 場景映射（商業正規描述）
@@ -223,12 +224,16 @@ const posterRouter = router({
 
       const ethnicLock = "STRICT REQUIREMENT — the person MUST be a Taiwanese woman of East Asian (Han Chinese / Taiwanese) ethnicity, AGE 21 to 25 years old (young adult, fresh youthful appearance, NOT middle-aged), FAIR to LIGHT skin (porcelain or light ivory tone, bright and luminous, NOT tanned, NOT dark, NOT olive-dark), resembling real young Taiwanese female influencers and 網美. DO NOT generate Western, European, Caucasian, South Asian, African, Japanese, Korean, or mixed-heritage appearances. DO NOT generate anyone older than 25 or with darker/tanned skin. Makeup and styling must follow current Taiwan nightlife fashion trends (網美 / 辣妹 aesthetic). This is a non-negotiable requirement.";
 
+      const goddessPosterClause = "GODDESS POSTER BODY STYLE — adult Taiwanese women only, glamorous club hostess / 辣妹 aesthetic, curvy hourglass silhouette, fuller bust, slim waist, defined hips, confident posture. Clothing may show collarbone, upper chest, and a small tasteful hint of cleavage suitable for an upscale nightclub poster. Keep it sexy but elegant and commercial: no nudity, no nipples, no lingerie-only styling, no transparent clothing, no explicit erotic pose, no pornographic mood.";
+
+      const noMenClause = "STRICT EXCLUSION — do NOT include men, male faces, male bodies, boyfriends, male customers, male staff, masculine-presenting people, mixed-gender crowds, or male silhouettes anywhere in the image. The final poster must show women only.";
+
       const referenceVariationClause = (input.hasUploadedPhoto && input.uploadedPhotoUrl)
         ? "IMPORTANT — use the uploaded reference photo only as STYLE / VIBE / POSE inspiration. Generate a DIFFERENT Taiwanese woman who looks similar to the reference but is clearly a different individual (different face, slightly different hairstyle, similar overall mood and aesthetic). Do NOT copy the reference face exactly. The new person still must follow all ethnic and age rules above."
         : "";
 
       const personCountClause = input.personCount > 1
-        ? `CRITICAL GROUP COUNT — Generate EXACTLY ${input.personCount} Taiwanese women in the same frame (group shot). All follow the ethnicity/age/skin rules above. Vary outfits (different colors and styles) and hairstyles, all within the chosen personal style. Balanced composition typical of Taiwan nightclub posters.`
+        ? `CRITICAL GROUP COUNT — Generate EXACTLY ${input.personCount} Taiwanese women in the same frame (group shot). All follow the ethnicity/age/skin rules above. Do not add any men or extra people. Vary outfits (different colors and styles) and hairstyles, all within the chosen personal style. Balanced composition typical of Taiwan nightclub posters.`
         : "";
 
       const framingClause = "CRITICAL FRAMING RULE — ALL faces must be FULLY VISIBLE within the frame. NEVER crop, cut off, or partially hide any face at the edges of the poster. Every person's complete face must be entirely inside the composition with adequate margin. Face cropping is strictly forbidden.";
@@ -257,6 +262,8 @@ const posterRouter = router({
       if (input.hasUploadedPhoto && input.uploadedPhotoUrl) {
         imagePrompt = `${ethnicLock}
 
+${goddessPosterClause}
+${noMenClause}
 ${referenceVariationClause}
 ${personCountClause}
 ${framingClause}
@@ -277,6 +284,8 @@ Vertical portrait format, 9:16 aspect ratio.`;
       } else {
         imagePrompt = `${ethnicLock}
 
+${goddessPosterClause}
+${noMenClause}
 ${personCountClause}
 ${framingClause}
 ${naturalismClause}
@@ -294,7 +303,7 @@ ${input.customPrompt ? `Additional details: ${input.customPrompt}.` : ""}
 ${qualityTerms}
 Vertical portrait format, 9:16 aspect ratio.
 
-REMINDER: The person(s) MUST be Taiwanese${input.personCount > 1 ? `, and there MUST be exactly ${input.personCount} women in the shot` : ""}. Non-negotiable.`;
+REMINDER: The person(s) MUST be Taiwanese women only${input.personCount > 1 ? `, and there MUST be exactly ${input.personCount} women in the shot` : ""}. No men anywhere. Non-negotiable.`;
       }
 
       // 使用 Imagen 4 生成圖片（需要 Gemini 付費方案）

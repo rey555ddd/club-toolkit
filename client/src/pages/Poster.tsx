@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { getImageRefs } from "@/lib/library";
+import { goddessCharacters, type GoddessCharacterId } from "@shared/goddessCharacters";
 import { toast } from "sonner";
 import {
   Image,
@@ -120,6 +121,8 @@ const themeOptions = [
   "電音派對夜", "試管調酒挑戰", "摩天輪調酒", "VIP 之夜",
   "新人見面會", "週年慶典", "節日主題派對", "限定優惠活動",
 ];
+
+const defaultTheme = themeOptions[0];
 
 const featureOptions = [
   "免費挑戰一次", "贈品活動", "特調飲品", "VIP 專屬待遇",
@@ -299,6 +302,105 @@ function drawTitle(
   ctx.restore();
 }
 
+function drawRoundRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number,
+) {
+  const radius = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + w - radius, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+  ctx.lineTo(x + w, y + h - radius);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+  ctx.lineTo(x + radius, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+}
+
+function detectTextPlacement(
+  ctx: CanvasRenderingContext2D,
+  W: number,
+  H: number,
+  blockHeight: number,
+) {
+  const data = ctx.getImageData(0, 0, W, H).data;
+  const sampleStep = Math.max(6, Math.round(Math.min(W, H) / 120));
+  const boxW = W * 0.84;
+  const boxX = W * 0.08;
+  const minY = H * 0.08;
+  const maxY = H * 0.9 - blockHeight;
+  const candidates = [0.16, 0.24, 0.34, 0.46, 0.58, 0.7, 0.8]
+    .map((ratio) => Math.min(maxY, Math.max(minY, H * ratio)));
+
+  const pixelAt = (x: number, y: number) => {
+    const i = (Math.min(H - 1, Math.max(0, y)) * W + Math.min(W - 1, Math.max(0, x))) * 4;
+    return [data[i], data[i + 1], data[i + 2]] as const;
+  };
+
+  const scoreBox = (x0: number, y0: number, w: number, h: number) => {
+    let count = 0;
+    let skin = 0;
+    let edge = 0;
+    let bright = 0;
+    let sum = 0;
+    let sumSq = 0;
+
+    for (let y = Math.round(y0); y < y0 + h; y += sampleStep) {
+      for (let x = Math.round(x0); x < x0 + w; x += sampleStep) {
+        const [r, g, b] = pixelAt(x, y);
+        const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        const isSkin =
+          r > 85 &&
+          g > 45 &&
+          b > 25 &&
+          r > g * 1.05 &&
+          r > b * 1.18 &&
+          max - min > 18 &&
+          Math.abs(r - g) > 8;
+        const [r2, g2, b2] = pixelAt(Math.min(W - 1, x + sampleStep), y);
+        const lum2 = 0.2126 * r2 + 0.7152 * g2 + 0.0722 * b2;
+
+        if (isSkin) skin += 1;
+        if (lum > 185) bright += 1;
+        edge += Math.abs(lum - lum2);
+        sum += lum;
+        sumSq += lum * lum;
+        count += 1;
+      }
+    }
+
+    if (!count) return Number.POSITIVE_INFINITY;
+    const mean = sum / count;
+    const variance = sumSq / count - mean * mean;
+    const skinRatio = skin / count;
+    const brightRatio = bright / count;
+    const edgeAvg = edge / count;
+    const topPreference = y0 < H * 0.42 ? -8 : 0;
+
+    return variance * 0.16 + edgeAvg * 0.9 + skinRatio * 900 + brightRatio * 180 + topPreference;
+  };
+
+  const best = candidates
+    .map((top) => ({ top, score: scoreBox(boxX, top, boxW, blockHeight) }))
+    .sort((a, b) => a.score - b.score)[0];
+
+  return {
+    x: boxX,
+    y: best.top,
+    w: boxW,
+    h: blockHeight,
+  };
+}
+
 async function renderTextOnCanvas(
   baseImageUrl: string,
   text: PosterText,
@@ -382,91 +484,93 @@ async function renderTextOnCanvas(
 
       const cfg = styleConfigs[style];
 
-      // Semi-transparent bottom gradient overlay for text readability
-      const grad = ctx.createLinearGradient(0, H * 0.45, 0, H);
-      grad.addColorStop(0, "rgba(0,0,0,0)");
-      grad.addColorStop(0.4, "rgba(0,0,0,0.35)");
-      grad.addColorStop(1, "rgba(0,0,0,0.85)");
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, H * 0.45, W, H * 0.55);
-
-      // Text layout from bottom up
+      // Text layout automatically moves to the quietest negative-space zone.
       ctx.textAlign = "center";
 
       const titleSize = Math.round(W * 0.078);
       const subtitleSize = Math.round(W * 0.042);
       const infoSize = Math.round(W * 0.032);
       const ctaSize = Math.round(W * 0.034);
+      const blockHeight =
+        (text.title ? titleSize * 1.45 : 0) +
+        (text.subtitle ? subtitleSize * 1.8 : 0) +
+        (text.info ? infoSize * 1.75 : 0) +
+        (text.cta ? ctaSize * 2.8 : 0) +
+        H * 0.035;
+      const placement = detectTextPlacement(ctx, W, H, blockHeight);
+      let cursorY = placement.y + titleSize * 1.05;
 
-      // CTA (bottom-most)
-      if (text.cta) {
-        const ctaY = H * 0.92;
-        ctx.font = `bold ${ctaSize}px "Noto Sans TC", sans-serif`;
-        // CTA pill background
-        const ctaMetrics = ctx.measureText(text.cta);
-        const pillW = ctaMetrics.width + ctaSize * 2.5;
-        const pillH = ctaSize * 2.2;
-        ctx.fillStyle = cfg.ctaBg;
-        ctx.beginPath();
-        const pillX = W / 2 - pillW / 2;
-        const pillY2 = ctaY - pillH / 2;
-        const r = pillH / 2;
-        ctx.moveTo(pillX + r, pillY2);
-        ctx.lineTo(pillX + pillW - r, pillY2);
-        ctx.quadraticCurveTo(pillX + pillW, pillY2, pillX + pillW, pillY2 + r);
-        ctx.quadraticCurveTo(pillX + pillW, pillY2 + pillH, pillX + pillW - r, pillY2 + pillH);
-        ctx.lineTo(pillX + r, pillY2 + pillH);
-        ctx.quadraticCurveTo(pillX, pillY2 + pillH, pillX, pillY2 + r);
-        ctx.quadraticCurveTo(pillX, pillY2, pillX + r, pillY2);
-        ctx.closePath();
-        ctx.fill();
-        // Border
-        ctx.strokeStyle = cfg.ctaTextColor + "40";
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-        // CTA text
-        ctx.fillStyle = cfg.ctaTextColor;
-        ctx.fillText(text.cta, W / 2, ctaY + ctaSize * 0.35);
-      }
+      ctx.save();
+      const padY = Math.max(18, W * 0.028);
+      const panelX = placement.x + W * 0.02;
+      const panelW = placement.w - W * 0.04;
+      const panelY = Math.max(0, placement.y - padY * 0.55);
+      const panelH = Math.min(H - panelY, placement.h + padY);
+      const panelGrad = ctx.createLinearGradient(0, panelY, 0, panelY + panelH);
+      panelGrad.addColorStop(0, "rgba(0,0,0,0.2)");
+      panelGrad.addColorStop(0.45, "rgba(0,0,0,0.42)");
+      panelGrad.addColorStop(1, "rgba(0,0,0,0.18)");
+      ctx.fillStyle = panelGrad;
+      ctx.shadowColor = "rgba(0,0,0,0.35)";
+      ctx.shadowBlur = W * 0.045;
+      drawRoundRect(ctx, panelX, panelY, panelW, panelH, W * 0.035);
+      ctx.fill();
+      ctx.restore();
 
-      // Info line
-      if (text.info) {
-        const infoY = H * 0.845;
-        ctx.font = `${infoSize}px "Noto Sans TC", sans-serif`;
-        ctx.fillStyle = cfg.infoColor;
-        ctx.shadowColor = "rgba(0,0,0,0.5)";
-        ctx.shadowBlur = 4;
-        ctx.fillText(text.info, W / 2, infoY);
-        ctx.shadowBlur = 0;
-      }
-
-      // Subtitle
-      if (text.subtitle) {
-        const subY = H * 0.77;
-        ctx.font = `600 ${subtitleSize}px "Noto Sans TC", sans-serif`;
-        ctx.fillStyle = cfg.subtitleColor;
-        ctx.shadowColor = "rgba(0,0,0,0.4)";
-        ctx.shadowBlur = 6;
-        ctx.fillText(text.subtitle, W / 2, subY);
-        ctx.shadowBlur = 0;
-      }
-
-      // Title — the main effect text (handled by drawTitle helper)
       if (text.title) {
-        const titleY = H * 0.68;
         ctx.textAlign = "center";
         ctx.textBaseline = "alphabetic";
-        drawTitle(ctx, text.title, W / 2, titleY, titleSize, titleEffect);
+        drawTitle(ctx, text.title, W / 2, cursorY, titleSize, titleEffect);
 
-        // Decorative gold line under title
         const lineMetrics = ctx.measureText(text.title);
         const lineW = Math.min(lineMetrics.width * 0.55, W * 0.5);
         ctx.strokeStyle = "rgba(201,168,76,0.55)";
         ctx.lineWidth = 1.5;
         ctx.beginPath();
-        ctx.moveTo(W / 2 - lineW / 2, titleY + titleSize * 0.4);
-        ctx.lineTo(W / 2 + lineW / 2, titleY + titleSize * 0.4);
+        ctx.moveTo(W / 2 - lineW / 2, cursorY + titleSize * 0.42);
+        ctx.lineTo(W / 2 + lineW / 2, cursorY + titleSize * 0.42);
         ctx.stroke();
+        cursorY += titleSize * 1.25;
+      }
+
+      if (text.subtitle) {
+        cursorY += subtitleSize * 0.65;
+        ctx.font = `600 ${subtitleSize}px "Noto Sans TC", sans-serif`;
+        ctx.fillStyle = cfg.subtitleColor;
+        ctx.shadowColor = "rgba(0,0,0,0.55)";
+        ctx.shadowBlur = 7;
+        ctx.fillText(text.subtitle, W / 2, cursorY);
+        ctx.shadowBlur = 0;
+        cursorY += subtitleSize * 1.45;
+      }
+
+      if (text.info) {
+        cursorY += infoSize * 0.45;
+        ctx.font = `${infoSize}px "Noto Sans TC", sans-serif`;
+        ctx.fillStyle = cfg.infoColor;
+        ctx.shadowColor = "rgba(0,0,0,0.55)";
+        ctx.shadowBlur = 5;
+        ctx.fillText(text.info, W / 2, cursorY);
+        ctx.shadowBlur = 0;
+        cursorY += infoSize * 1.75;
+      }
+
+      if (text.cta) {
+        cursorY += ctaSize * 0.55;
+        ctx.font = `bold ${ctaSize}px "Noto Sans TC", sans-serif`;
+        const ctaMetrics = ctx.measureText(text.cta);
+        const pillW = ctaMetrics.width + ctaSize * 2.5;
+        const pillH = ctaSize * 2.2;
+        const pillX = W / 2 - pillW / 2;
+        const pillY = cursorY - pillH / 2;
+        ctx.fillStyle = cfg.ctaBg;
+        drawRoundRect(ctx, pillX, pillY, pillW, pillH, pillH / 2);
+        ctx.fill();
+        ctx.strokeStyle = cfg.ctaTextColor + "40";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.fillStyle = cfg.ctaTextColor;
+        ctx.fillText(text.cta, W / 2, cursorY + ctaSize * 0.35);
       }
 
       resolve(canvas.toDataURL("image/png", 0.95));
@@ -591,7 +695,7 @@ export default function Poster() {
   const [selectedOutfitStyle, setSelectedOutfitStyle] = useState<OutfitStyle | "">("");
   const [selectedScene, setSelectedScene] = useState<SceneType | "">("");
   const [selectedTitleEffect, setSelectedTitleEffect] = useState<TitleEffect | "">("");
-  const [selectedTheme, setSelectedTheme] = useState("");
+  const [selectedTheme, setSelectedTheme] = useState(defaultTheme);
   const [customTheme, setCustomTheme] = useState("");
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
   const [customPrompt, setCustomPrompt] = useState("");
@@ -601,6 +705,7 @@ export default function Poster() {
   const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState<string | null>(null);
   const [uploadedPhotoPreview, setUploadedPhotoPreview] = useState<string | null>(null);
   const [personCount, setPersonCount] = useState<number>(1);
+  const [selectedCharacterIds, setSelectedCharacterIds] = useState<GoddessCharacterId[]>(["ct-a01"]);
   const [referencePosterUrl, setReferencePosterUrl] = useState<string | null>(null);
   const [referencePosterPreview, setReferencePosterPreview] = useState<string | null>(null);
   const refPosterInputRef = useRef<HTMLInputElement>(null);
@@ -723,6 +828,11 @@ export default function Poster() {
       .join("。")
       .trim();
 
+    if (!useUploadedPhoto && selectedCharacterIds.length === 0) {
+      toast.error("請至少選擇一位女神");
+      return;
+    }
+
     generateMutation.mutate({
       hotel: selectedHotel,
       style: selectedStyle,
@@ -731,7 +841,8 @@ export default function Poster() {
       hasUploadedPhoto: useUploadedPhoto && !!uploadedPhotoUrl,
       uploadedPhotoUrl: uploadedPhotoUrl ?? undefined,
       referencePosterUrl: referencePosterUrl ?? undefined,
-      personCount,
+      personCount: useUploadedPhoto ? personCount : selectedCharacterIds.length,
+      selectedCharacterIds: useUploadedPhoto ? [] : selectedCharacterIds,
       customPrompt: merged || undefined,
       libraryPosterImages: getImageRefs("poster", 2),
       libraryHostessPhotos: getImageRefs("hostess_photo", 2),
@@ -956,7 +1067,7 @@ export default function Poster() {
                 </div>
                 <button
                   onClick={handleSuggestCopy}
-                  disabled={suggestCopyMutation.isPending || (!selectedTheme && !customTheme)}
+                  disabled={suggestCopyMutation.isPending}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
                   style={{
                     background: suggestCopyMutation.isPending
@@ -964,8 +1075,8 @@ export default function Poster() {
                       : `${currentStyle.accent}12`,
                     border: `1px solid ${currentStyle.accent}30`,
                     color: currentStyle.accent,
-                    opacity: (!selectedTheme && !customTheme) ? 0.4 : 1,
-                    cursor: (!selectedTheme && !customTheme) ? "not-allowed" : "pointer",
+                    opacity: suggestCopyMutation.isPending ? 0.6 : 1,
+                    cursor: suggestCopyMutation.isPending ? "wait" : "pointer",
                   }}
                 >
                   {suggestCopyMutation.isPending ? (
@@ -1201,6 +1312,47 @@ export default function Poster() {
               {!useUploadedPhoto && (
                 <div className="space-y-3">
                   <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs" style={{ color: "rgba(255,255,255,0.55)" }}>選擇女神</p>
+                      <span className="text-xs" style={{ color: "#f0c040" }}>{selectedCharacterIds.length} / 4 位</span>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {goddessCharacters.map((character) => {
+                        const isSelected = selectedCharacterIds.includes(character.id);
+                        return (
+                          <button
+                            type="button"
+                            key={character.id}
+                            onClick={() => setSelectedCharacterIds((current) => {
+                              if (current.includes(character.id)) return current.filter((id) => id !== character.id);
+                              if (current.length >= 4) {
+                                toast.error("一張海報最多選 4 位女神");
+                                return current;
+                              }
+                              return [...current, character.id];
+                            })}
+                            className="relative overflow-hidden rounded-xl text-left transition-all"
+                            style={{ border: `2px solid ${isSelected ? "#f0c040" : "rgba(255,255,255,0.08)"}` }}
+                          >
+                            <img src={character.image} alt={character.name} className="w-full aspect-[2/3] object-cover object-top" />
+                            <span className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black via-black/75 to-transparent">
+                              <span className="block text-sm font-semibold text-white">{character.name}</span>
+                              <span className="block text-[11px] text-white/60">{character.tag}</span>
+                            </span>
+                            {isSelected && (
+                              <span className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center" style={{ background: "#f0c040", color: "#111" }}>
+                                <Check size={14} strokeWidth={3} />
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="text-[11px] mt-2 leading-relaxed" style={{ color: "rgba(255,255,255,0.35)" }}>
+                      可選 1–4 位固定角色；下方仍可調整服裝與氣質。AI 會儘量保留角色辨識度。
+                    </p>
+                  </div>
+                  <div>
                     <p className="text-xs mb-2" style={{ color: "rgba(255,255,255,0.45)" }}>
                       人物氣質
                     </p>
@@ -1210,27 +1362,6 @@ export default function Poster() {
                       options={personStyleOptions}
                       placeholder="選擇人物氣質（選填）"
                     />
-                  </div>
-                  <div>
-                    <p className="text-xs mb-2" style={{ color: "rgba(255,255,255,0.45)" }}>
-                      人數 <span style={{ color: "rgba(255,255,255,0.3)" }}>({personCount} 人)</span>
-                    </p>
-                    <div className="grid grid-cols-6 gap-2">
-                      {[1, 2, 3, 4, 5, 6].map((n) => (
-                        <button
-                          key={n}
-                          onClick={() => setPersonCount(n)}
-                          className="py-2 rounded-lg text-sm transition-all"
-                          style={{
-                            background: personCount === n ? "rgba(240,192,64,0.18)" : "rgba(255,255,255,0.04)",
-                            border: `1px solid ${personCount === n ? "rgba(240,192,64,0.5)" : "rgba(255,255,255,0.08)"}`,
-                            color: personCount === n ? "#f0c040" : "rgba(255,255,255,0.55)",
-                          }}
-                        >
-                          {n}
-                        </button>
-                      ))}
-                    </div>
                   </div>
                   <div>
                     <p className="text-xs mb-2" style={{ color: "rgba(255,255,255,0.45)" }}>

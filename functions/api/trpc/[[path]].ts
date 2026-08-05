@@ -804,6 +804,31 @@ function parseDataUrl(dataUrl: string, label: string): RefImage | null {
 // 台灣女性地面真相參考池 — 每次生成隨機抽 2 張當 multimodal 參考
 const TAIWAN_REF_POOL = Array.from({ length: 14 }, (_, i) => `/refs/taiwan/tw-ref-${String(i + 1).padStart(2, "0")}.jpg`);
 
+const GODDESS_CHARACTERS = {
+  "ct-a01": { name: "Yaoqing", path: "/characters/ct-a01-yaoqing.jpg", identity: "glamorous mature oval face, long glossy dark waves, curvy hourglass figure, fuller bust and long legs" },
+  "ct-a02": { name: "Mia", path: "/characters/ct-a02-mia.jpg", identity: "lively heart-shaped face, chic short bob, deep chocolate hair with berry-purple underlayer, playful expression" },
+  "ct-a03": { name: "Kelly", path: "/characters/ct-a03-kelly.jpg", identity: "refined almond eyes, long chestnut waves, curvy hourglass figure, especially fuller bust, narrow waist and long legs" },
+  "ct-a04": { name: "Ruoxi", path: "/characters/ct-a04-ruoxi.jpg", identity: "delicate long oval face, straight dark hair, cool refined gaze and tall slender silhouette" },
+  "ct-a05": { name: "Anna", path: "/characters/ct-a05-anna.jpg", identity: "softly angular face, warm brown wavy hair, fashionable confident gaze and balanced feminine curves" },
+  "ct-a06": { name: "Lele", path: "/characters/ct-a06-lele.jpg", identity: "sweet rounded-oval face, dark softly waved hair, warm genuine smile and graceful slim figure" },
+} as const;
+type GoddessCharacterId = keyof typeof GODDESS_CHARACTERS;
+
+async function fetchGoddessRefs(requestUrl: string, ids: GoddessCharacterId[]): Promise<RefImage[]> {
+  const origin = new URL(requestUrl).origin;
+  const results = await Promise.all(ids.map(async (id) => {
+    const character = GODDESS_CHARACTERS[id];
+    const response = await fetch(`${origin}${character.path}`, { cf: { cacheTtl: 86400 } } as RequestInit);
+    if (!response.ok) throw new Error(`女神角色素材讀取失敗：${character.name}`);
+    return {
+      mimeType: response.headers.get("content-type") ?? "image/jpeg",
+      data: bufferToBase64(await response.arrayBuffer()),
+      label: `FICTIONAL LOCKED CHARACTER ${character.name}: ${character.identity}. Preserve this exact fictional character's recognizable facial identity and hairstyle; change only wardrobe, pose, lighting and scene as requested.`,
+    };
+  }));
+  return results;
+}
+
 function bufferToBase64(buf: ArrayBuffer): string {
   const bytes = new Uint8Array(buf);
   let binary = "";
@@ -939,19 +964,34 @@ async function tryGemini20ImageModel(
   }
 }
 
-async function requestOpenAIImage(apiKey: string, prompt: string): Promise<string | null> {
-  const response = await fetch("https://api.openai.com/v1/images/generations", {
+async function requestOpenAIImage(apiKey: string, prompt: string, refs: RefImage[] = []): Promise<string | null> {
+  const endpoint = refs.length ? "edits" : "generations";
+  let body: BodyInit;
+  let headers: HeadersInit;
+
+  if (refs.length) {
+    const form = new FormData();
+    form.append("model", "gpt-image-2");
+    form.append("prompt", prompt);
+    form.append("size", "1024x1536");
+    form.append("quality", "high");
+    refs.slice(0, 4).forEach((ref, index) => {
+      const binary = atob(ref.data);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      form.append("image[]", new Blob([bytes], { type: ref.mimeType }), `reference-${index + 1}.${ref.mimeType.includes("png") ? "png" : "jpg"}`);
+    });
+    body = form;
+    headers = { Authorization: `Bearer ${apiKey}` };
+  } else {
+    body = JSON.stringify({ model: "gpt-image-2", prompt, size: "1024x1536", quality: "high" });
+    headers = { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` };
+  }
+
+  const response = await fetch(`https://api.openai.com/v1/images/${endpoint}`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: "gpt-image-2",
-      prompt,
-      size: "1024x1536",
-      quality: "medium",
-    }),
+    headers,
+    body,
     signal: AbortSignal.timeout(120000),
   });
 
@@ -991,61 +1031,21 @@ async function geminiGenerateImage(
   }
 
   const refNote = refs.length
-    ? `\n\nReference guidance from uploaded materials: ${refs.map((r) => r.label).join("; ")}. Do not copy any real face exactly.`
+    ? `\n\nREFERENCE IMAGES ARE ATTACHED IN THE SAME ORDER: ${refs.map((r, index) => `${index + 1}. ${r.label}`).join("; ")}. Preserve the recognizable identity, face shape, hairstyle and overall silhouette of named fictional character references while applying the requested outfit and scene. Other reference materials guide composition only.`
     : "";
   const basePrompt = `${prompt}${refNote}`;
-  const peoplePrompt = sanitizeOpenAIImagePrompt(basePrompt, { allowPeople: true });
-
   try {
-    return await requestOpenAIImage(apiKey, peoplePrompt);
+    return await requestOpenAIImage(apiKey, basePrompt, refs);
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     const isSafetyBlock =
       /moderation|safety|sexual|violence|blocked|policy/i.test(message);
     if (!isSafetyBlock) throw e;
 
-    console.warn("[OpenAI Image] People poster blocked by safety filter; retrying safe background fallback.");
-    const backgroundPrompt = sanitizeOpenAIImagePrompt(basePrompt, { allowPeople: false });
-    return await requestOpenAIImage(apiKey, backgroundPrompt);
+    console.warn("[OpenAI Image] Poster blocked by safety filter; retrying with conservative wardrobe while retaining characters.");
+    const safePrompt = `${basePrompt}\nSafety adjustment: all adults wear elegant cocktail or evening dresses with secure coverage. Keep poses confident and non-suggestive. No nudity, lingerie, transparent fabric, explicit erotic emphasis, or intimate touching.`;
+    return await requestOpenAIImage(apiKey, safePrompt, refs);
   }
-}
-
-function sanitizeOpenAIImagePrompt(
-  prompt: string,
-  options: { allowPeople: boolean } = { allowPeople: false }
-): string {
-  const themeMatch = prompt.match(/Event theme:\s*([^\n.]+)/i);
-  const styleMatch = prompt.match(/Style:\s*([^\n.]+)/i);
-  const settingMatch = prompt.match(/Setting:\s*([^\n.]+)/i);
-  const countMatch = prompt.match(/EXACTLY\s+(\d+)\s+(?:Taiwanese\s+)?(?:women|people|persons)/i);
-
-  const theme = themeMatch?.[1]?.trim() || "premium evening event";
-  const style = styleMatch?.[1]?.trim() || "modern minimalist luxury style";
-  const setting = settingMatch?.[1]?.trim() || "elegant hotel lounge interior";
-  const peopleCount = Math.min(Number(countMatch?.[1] || 1), 4);
-
-  const sharedRules = `Theme: ${theme}.
-Visual style: ${style}.
-Setting: ${setting}.
-Create a vertical 3:4 poster-ready image with elegant lighting, polished interior decor, refined lounge details, tasteful gold accents, and clear negative space for later text overlay.
-Safe luxury hospitality marketing aesthetic only.
-No nudity, no lingerie, no cleavage emphasis, no suggestive content, no sexualized pose, no kissing, no intimate touching, no alcohol consumption scene, no intoxication, no explicit nightclub or adult-entertainment cues.`;
-
-  if (options.allowPeople) {
-    return `Safe commercial event poster for a premium hotel hospitality event.
-${sharedRules}
-Include ${peopleCount === 1 ? "one" : peopleCount} adult Taiwanese East Asian hospitality staff member${peopleCount === 1 ? "" : "s"}, age 25+, in elegant full-coverage formal eveningwear.
-People should look professional, warm, refined, and approachable, with natural smiles and fully visible faces.
-Use tasteful non-revealing dresses or tailored formal outfits, neutral standing poses, and a polished hotel-lounge atmosphere.
-The image must feel like a mainstream hotel event poster, suitable for workplace marketing review.`;
-  }
-
-  return `Safe commercial event poster background for a premium hotel lounge.
-Theme: ${theme}.
-Visual style: ${style}.
-Setting: ${setting}.
-Create a vertical 3:4 poster-ready image with elegant lighting, polished interior decor, refined bar or lounge details, tasteful gold accents, and clear negative space for later text overlay.
-No people, no human bodies, no faces, no suggestive content, no alcohol consumption scene, no nudity, no sexualized pose, no lingerie. Safe luxury hospitality marketing aesthetic only.`;
 }
 
 // ===== Router: Copywriter =====
@@ -1430,6 +1430,7 @@ const posterRouter = router({
         uploadedPhotoUrl: z.string().optional(),
         referencePosterUrl: z.string().optional(),
         personCount: z.number().min(1).max(6).default(1),
+        selectedCharacterIds: z.array(z.enum(["ct-a01", "ct-a02", "ct-a03", "ct-a04", "ct-a05", "ct-a06"])).max(4).default([]),
         customPrompt: z.string().optional(),
         effects: z.array(z.string()).default([]),
         personStyle: z.enum(["elegant", "sweet", "fashionable", "graceful", "cool", "sexy"]).optional(),
@@ -1441,6 +1442,10 @@ const posterRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
+      if (!input.hasUploadedPhoto && input.selectedCharacterIds.length === 0) {
+        throw new Error("請至少選擇一位女神");
+      }
+      const selectedCount = input.selectedCharacterIds.length || input.personCount;
       const styleDescriptions: Record<string, string> = {
         neon_electronic: "neon electronic music night club style, purple and blue neon lights, dark background, futuristic cyberpunk aesthetic, glowing neon signs",
         luxury_gold: "luxury gold and black style, elegant golden decorations, dark background with golden accents, high-end nightclub atmosphere, sophisticated and glamorous",
@@ -1459,8 +1464,8 @@ const posterRouter = router({
         sweet: "a Taiwanese female hostess, East Asian (Han Chinese / Taiwanese) ethnicity, sweet 甜美網美 (Taiwan sweet girl-next-door influencer) aesthetic, shoulder-length wavy black or dark brown hair, bangs or side-swept fringe, fair skin with healthy glow, large almond eyes, puppy-dog eyeliner style popular in Taiwan, natural pink cheeks, glossy pink lips, wearing a chic cocktail dress, youthful approachable Taiwanese girl look, bright radiant smile",
         fashionable: "a Taiwanese female hostess, East Asian (Han Chinese / Taiwanese) ethnicity, trendy 時尚網美 (Taiwan fashion influencer) aesthetic, styled wavy or sleek hair in dark brown or black with subtle caramel highlights (NEVER blonde or platinum), fair skin, sharp defined eye makeup following current Taiwan beauty trends, matte or glossy bold lips, wearing contemporary designer outfit, modern and chic Taiwanese influencer look, confident expression",
         graceful: "a Taiwanese female hostess, East Asian (Han Chinese / Taiwanese) ethnicity, graceful 氣質女神 (Taiwan goddess) aesthetic, long flowing straight black hair, pale porcelain skin, delicate refined facial features typical of classic Taiwanese beauty, soft shimmer eyeshadow, natural flushed cheeks, gentle pink lips, wearing a classic evening dress, cultured refined Taiwanese hostess look, gentle warm smile",
-        cool: "a Taiwanese female hostess, East Asian (Han Chinese / Taiwanese) ethnicity, bold 辣妹 (Taiwan hot-girl / 八大辣妹) nightlife aesthetic, long dyed hair in dark chocolate brown or deep chestnut with subtle caramel highlights (NEVER platinum or blonde) styled in Taiwan hot-girl fashion, fair-light skin, dramatic smoky eye makeup, feather lashes, nose contour, bold matte or glossy lips, wearing a figure-hugging sleek evening outfit, confident sultry Taiwanese 辣妹 nightlife look, captivating gaze",
-        sexy: "a Taiwanese female hostess, East Asian (Han Chinese / Taiwanese) ethnicity, sexy 性感火辣 (Taiwan seductive hot-girl) aesthetic, long wavy hair in glossy black / dark brown / caramel tones, toned curvy feminine figure with alluring silhouette, fair to light olive skin with healthy sheen, sultry eye makeup with defined lashes, plump glossy lips, subtle cleavage or backless design, wearing a figure-flattering low-cut or body-con evening dress (tasteful elegant sexy, not vulgar), confident flirty expression, mature Taiwanese 八大 nightlife sex-appeal look, commercial fashion editorial quality",
+        cool: "a Taiwanese female hostess, East Asian (Han Chinese / Taiwanese) ethnicity, bold 辣妹 (Taiwan hot-girl / 八大辣妹) nightlife aesthetic, long dyed hair in dark chocolate brown or deep chestnut with subtle caramel highlights (NEVER platinum or blonde) styled in Taiwan hot-girl fashion, fair-light skin, dramatic smoky eye makeup, feather lashes, nose contour, bold matte or glossy lips, curvy hourglass figure with fuller bust and slim waist, wearing a figure-hugging sleek evening outfit with a small tasteful hint of cleavage, confident sultry Taiwanese 辣妹 nightlife look, sexy but elegant commercial poster quality",
+        sexy: "a Taiwanese female hostess, East Asian (Han Chinese / Taiwanese) ethnicity, sexy 性感火辣 (Taiwan seductive hot-girl) aesthetic, long wavy hair in glossy black / dark brown / caramel tones, curvy hourglass feminine figure, fuller bust, slim waist, defined hips, fair to light olive skin with healthy sheen, sultry eye makeup with defined lashes, plump glossy lips, subtle tasteful cleavage or backless design, wearing a figure-flattering low-cut or body-con evening dress (elegant sexy, not vulgar, not pornographic), confident flirty expression, mature Taiwanese 八大 nightlife sex-appeal look, commercial fashion editorial quality",
       };
 
       const sceneMap: Record<string, string> = {
@@ -1512,14 +1517,18 @@ Skin: porcelain or light ivory tone, NOT tanned, NOT dark, NOT olive-dark.
 
 This is non-negotiable. Think real Taiwanese influencers like 愛瑞絲、吳宜樺、邵庭, real 八大 hostesses in Taipei/Taoyuan clubs — NOT Victoria's Secret models, NOT K-pop idols, NOT Japanese gravure models. Pure Taiwanese face.`;
 
+      const goddessPosterClause = `GODDESS POSTER BODY STYLE — adult Taiwanese women only, glamorous club hostess / 辣妹 aesthetic, curvy hourglass silhouette, fuller bust, slim waist, defined hips, confident posture. Clothing may show collarbone, upper chest, and a small tasteful hint of cleavage suitable for an upscale nightclub poster. Keep it sexy but elegant and commercial: no nudity, no nipples, no lingerie-only styling, no transparent clothing, no explicit erotic pose, no pornographic mood.`;
+
+      const noMenClause = `STRICT EXCLUSION — do NOT include men, male faces, male bodies, boyfriends, male customers, male staff, masculine-presenting people, mixed-gender crowds, or male silhouettes anywhere in the image. The final poster must show women only.`;
+
       const referenceVariationClause = (input.hasUploadedPhoto && input.uploadedPhotoUrl)
         ? "IMPORTANT — use the uploaded reference photo only as STYLE / VIBE / POSE inspiration. Generate a DIFFERENT Taiwanese woman who looks similar to the reference but is clearly a different individual (different face, slightly different hairstyle, similar overall mood and aesthetic). Do NOT copy the reference face exactly. The new person still must follow all ethnic and age rules above."
         : "";
 
-      const personCountClause = input.personCount > 1
-        ? `CRITICAL GROUP COUNT — Generate EXACTLY ${input.personCount} Taiwanese women standing together in the same frame (group shot, ensemble poster style). All ${input.personCount} women must follow the ethnicity/age/skin rules above. Arrange them in a visually balanced composition typical of Taiwanese nightclub marketing posters — e.g. standing in a row, slightly offset in depth, or grouped in a V-formation. DO NOT generate a different number of people. Exactly ${input.personCount}.
+      const personCountClause = selectedCount > 1
+        ? `CRITICAL GROUP COUNT — Generate EXACTLY ${selectedCount} Taiwanese women standing together in the same frame (group shot, ensemble poster style). All ${selectedCount} women must follow the ethnicity/age/skin rules above. Do not add any men or extra people. Arrange them in a visually balanced composition typical of Taiwanese nightclub marketing posters — e.g. standing in a row, slightly offset in depth, or grouped in a V-formation. DO NOT generate a different number of people. Exactly ${selectedCount}.
 
-CRITICAL FACIAL DIVERSITY — all ${input.personCount} women MUST have clearly DIFFERENT faces and appearances. They must look like ${input.personCount} distinct real individuals, NOT sisters, NOT twins, NOT the same face copy-pasted. Vary significantly:
+CRITICAL FACIAL DIVERSITY — all ${selectedCount} women MUST have clearly DIFFERENT faces and appearances. They must look like ${selectedCount} distinct real individuals, NOT sisters, NOT twins, NOT the same face copy-pasted. Vary significantly:
 - FACE SHAPE: mix of oval, heart-shaped, V-line, softly angular, slim almond — each person gets a different shape. NEVER round / chubby / puffy faces.
 - EYE shape & size: some with larger almond eyes, some narrower, some with double eyelid, some monolid, different brow shapes
 - NOSE: different nose bridges (some higher, some softer), different nose tip shapes
@@ -1565,7 +1574,7 @@ Real humans have:
 - REAL hair: individual strands visible, flyaways, slightly messy edges, roots showing if dyed, not a 'helmet of perfection'.
 - REAL lighting: visible shadow gradation, catchlights in eyes from actual light sources, specular highlights on skin from sweat/oil, NOT flat beauty-mode glow.
 
-${input.personCount > 1 ? `CHARACTER DIVERSITY OF BEAUTY — with ${input.personCount} people in frame, DO NOT make all of them supermodel-perfect. MANDATORY: at least 1-2 of the ${input.personCount} must be clearly ORDINARY-LOOKING (普通), NOT stunning. These ordinary ones have:
+${selectedCount > 1 ? `CHARACTER DIVERSITY OF BEAUTY — with ${selectedCount} people in frame, keep every selected fictional character clearly distinct and recognizable. Include natural human texture and variation without changing their locked identities:
 - Plain girl-next-door features, 6-7/10 attractiveness (NOT 9-10/10)
 - Smaller or narrower eyes, wider/flatter nose, less defined cheekbones
 - Thinner or less plump lips
@@ -1618,6 +1627,8 @@ The target is: people viewing the poster should think 'these are real Taiwanese 
       if (input.hasUploadedPhoto && input.uploadedPhotoUrl) {
         imagePrompt = `${ethnicLock}
 
+${goddessPosterClause}
+${noMenClause}
 ${referenceVariationClause}
 ${naturalismClause}
 
@@ -1639,6 +1650,8 @@ Vertical portrait format, classic poster aspect ratio 3:4 or 2:3 (same proportio
       } else {
         imagePrompt = `${ethnicLock}
 
+${goddessPosterClause}
+${noMenClause}
 ${naturalismClause}
 
 ${personCountClause}
@@ -1660,12 +1673,16 @@ Vertical portrait format, classic poster aspect ratio 3:4 or 2:3 (same proportio
 
 FINAL REMINDERS (non-negotiable):
 1. Persons MUST be Taiwanese (East Asian / Han Chinese / Taiwanese) — no Western, blonde, platinum, or mixed-race looks
-2. ${input.personCount > 1 ? `EXACTLY ${input.personCount} women in the shot, EACH with clearly different face / hair / outfit / beauty level. 1-2 MUST look ordinary (6-7/10), not supermodels.` : "Face must look like a real photographed human, NOT AI-perfect."}
-3. Visible skin texture, pores, asymmetry, and small imperfections are REQUIRED. Reject doll-like airbrushed faces.
-4. Aesthetic target: candid iPhone-shot Taiwan nightclub team photo, NOT AI beauty render.`;
+2. Women only. No men, male customers, male staff, boyfriends, or mixed-gender crowd anywhere in the image.
+3. ${selectedCount > 1 ? `EXACTLY ${selectedCount} women in the shot, EACH matching her attached fictional character reference with a clearly distinct face and hairstyle.` : "Face must look like a real photographed human, NOT AI-perfect."}
+4. Visible skin texture, pores, asymmetry, and small imperfections are REQUIRED. Reject doll-like airbrushed faces.
+5. Aesthetic target: candid iPhone-shot Taiwan nightclub team photo, NOT AI beauty render.`;
       }
 
       const refs: RefImage[] = [];
+      if (input.selectedCharacterIds.length > 0) {
+        refs.push(...await fetchGoddessRefs(ctx.requestUrl, input.selectedCharacterIds));
+      }
       if (input.hasUploadedPhoto && input.uploadedPhotoUrl) {
         const r = parseDataUrl(input.uploadedPhotoUrl, "character reference photo (use as style/pose inspiration for a DIFFERENT Taiwanese woman — do NOT clone the face)");
         if (r) refs.push(r);
@@ -1695,7 +1712,7 @@ FINAL REMINDERS (non-negotiable):
         }
       }
       // 若使用者沒上傳人物參考也沒有素材庫照片，從台灣地面真相池隨機抽 2 張
-      const hasUserRefs = input.hasUploadedPhoto || (input.libraryHostessPhotos && input.libraryHostessPhotos.length > 0);
+      const hasUserRefs = input.selectedCharacterIds.length > 0 || input.hasUploadedPhoto || (input.libraryHostessPhotos && input.libraryHostessPhotos.length > 0);
       if (!hasUserRefs) {
         const autoRefs = await fetchTaiwanRefs(ctx.requestUrl, 2);
         refs.push(...autoRefs);
