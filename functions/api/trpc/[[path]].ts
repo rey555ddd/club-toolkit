@@ -805,11 +805,11 @@ function parseDataUrl(dataUrl: string, label: string): RefImage | null {
 const TAIWAN_REF_POOL = Array.from({ length: 14 }, (_, i) => `/refs/taiwan/tw-ref-${String(i + 1).padStart(2, "0")}.jpg`);
 
 const GODDESS_CHARACTERS = {
-  "ct-a01": { name: "Yaoqing", path: "/characters/ct-a01-yaoqing.jpg", identity: "glamorous mature oval face, long glossy dark waves, curvy hourglass figure, fuller bust and long legs" },
+  "ct-a01": { name: "Yaoqing", path: "/characters/ct-a01-yaoqing.jpg", identity: "mature oval face and long glossy dark waves" },
   "ct-a02": { name: "Mia", path: "/characters/ct-a02-mia.jpg", identity: "lively heart-shaped face, chic short bob, deep chocolate hair with berry-purple underlayer, playful expression" },
-  "ct-a03": { name: "Kelly", path: "/characters/ct-a03-kelly.jpg", identity: "refined almond eyes, long chestnut waves, curvy hourglass figure, especially fuller bust, narrow waist and long legs" },
+  "ct-a03": { name: "Kelly", path: "/characters/ct-a03-kelly.jpg", identity: "refined almond eyes and long chestnut waves" },
   "ct-a04": { name: "Ruoxi", path: "/characters/ct-a04-ruoxi.jpg", identity: "delicate long oval face, straight dark hair, cool refined gaze and tall slender silhouette" },
-  "ct-a05": { name: "Anna", path: "/characters/ct-a05-anna.jpg", identity: "softly angular face, warm brown wavy hair, fashionable confident gaze and balanced feminine curves" },
+  "ct-a05": { name: "Anna", path: "/characters/ct-a05-anna.jpg", identity: "softly angular face, warm brown wavy hair and confident gaze" },
   "ct-a06": { name: "Lele", path: "/characters/ct-a06-lele.jpg", identity: "sweet rounded-oval face, dark softly waved hair, warm genuine smile and graceful slim figure" },
 } as const;
 type GoddessCharacterId = keyof typeof GODDESS_CHARACTERS;
@@ -818,7 +818,8 @@ async function fetchGoddessRefs(requestUrl: string, ids: GoddessCharacterId[]): 
   const origin = new URL(requestUrl).origin;
   const results = await Promise.all(ids.map(async (id) => {
     const character = GODDESS_CHARACTERS[id];
-    const response = await fetch(`${origin}${character.path}`, { cf: { cacheTtl: 86400 } } as RequestInit);
+    const referencePath = character.path.replace(".jpg", "-face.jpg");
+    const response = await fetch(`${origin}${referencePath}`, { cf: { cacheTtl: 86400 } } as RequestInit);
     if (!response.ok) throw new Error(`女神角色素材讀取失敗：${character.name}`);
     return {
       mimeType: response.headers.get("content-type") ?? "image/jpeg",
