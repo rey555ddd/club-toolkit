@@ -974,9 +974,9 @@ async function requestOpenAIImage(apiKey: string, prompt: string, refs: RefImage
     form.append("model", "gpt-image-2");
     form.append("prompt", prompt);
     form.append("size", "1024x1536");
-    // Pages requests must finish before Cloudflare's edge timeout. Character
-    // references improve realism more than the slower high-quality pass here.
-    form.append("quality", "medium");
+    // Pages requests must finish before Cloudflare's edge timeout. The locked
+    // character references improve realism more than a slower quality pass.
+    form.append("quality", "low");
     refs.slice(0, 4).forEach((ref, index) => {
       const binary = atob(ref.data);
       const bytes = new Uint8Array(binary.length);
