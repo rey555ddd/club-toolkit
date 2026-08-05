@@ -1045,7 +1045,11 @@ async function geminiGenerateImage(
     if (!isSafetyBlock) throw e;
 
     console.warn("[OpenAI Image] Poster blocked by safety filter; retrying with conservative wardrobe while retaining characters.");
-    const safePrompt = `${basePrompt}\nSafety adjustment: all adults wear elegant cocktail or evening dresses with secure coverage. Keep poses confident and non-suggestive. No nudity, lingerie, transparent fabric, explicit erotic emphasis, or intimate touching.`;
+    const safePrompt = `Create a premium vertical 2:3 evening event poster photograph for an upscale Taiwan hotel lounge.
+Use every attached image as a locked fictional adult character reference. Preserve each character's recognizable face shape, hairstyle, hair color and overall silhouette. Show exactly ${Math.max(1, refs.filter((ref) => ref.label.includes("FICTIONAL LOCKED CHARACTER")).length)} adult Taiwanese women, with every face fully visible and naturally photographed.
+Wardrobe: elegant cocktail or evening dresses with secure coverage, refined tailoring and varied colors. Poses are confident, friendly and non-suggestive.
+Scene: polished luxury lounge interior with ${prompt.match(/Style:\s*([^\n.]+)/i)?.[1] ?? "dark gold cinematic lighting"}. Natural skin texture, realistic shadows, individual hair strands, professional commercial photography. Leave clear negative space for later text overlay. No text or logos in the image.
+Mainstream hospitality advertising suitable for workplace review. No nudity, lingerie, transparent fabric, intimate touching or explicit content.`;
     return await requestOpenAIImage(apiKey, safePrompt, refs);
   }
 }
