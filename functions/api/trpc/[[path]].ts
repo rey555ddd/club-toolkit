@@ -1836,10 +1836,33 @@ export type AppRouter = typeof appRouter;
 
 // ===== Cloudflare Pages Handler =====
 export const onRequest: PagesFunction<Env> = async (context) => {
-  return fetchRequestHandler({
+  const response = await fetchRequestHandler({
     endpoint: "/api/trpc",
     req: context.request,
     router: appRouter,
     createContext: () => ({ env: context.env as unknown as Env, requestUrl: context.request.url }),
   });
+  if (response.ok || !response.headers.get("Content-Type")?.includes("application/json")) return response;
+  try {
+    const payload = await response.json() as unknown;
+    const scrub = (value: unknown): void => {
+      if (!value || typeof value !== "object") return;
+      if (Array.isArray(value)) {
+        value.forEach(scrub);
+        return;
+      }
+      const record = value as Record<string, unknown>;
+      delete record.stack;
+      Object.values(record).forEach(scrub);
+    };
+    scrub(payload);
+    const headers = new Headers(response.headers);
+    headers.set("Content-Type", "application/json; charset=utf-8");
+    return new Response(JSON.stringify(payload), { status: response.status, statusText: response.statusText, headers });
+  } catch {
+    return new Response(JSON.stringify({ error: "request_failed" }), {
+      status: response.status,
+      headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
+    });
+  }
 };
