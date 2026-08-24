@@ -696,12 +696,10 @@ interface PagesFunction<Env = unknown> {
 const t = initTRPC.context<Context>().create({
   transformer: superjson,
   errorFormatter({ shape }) {
+    const { stack: _stack, ...safeData } = shape.data;
     return {
       ...shape,
-      data: {
-        ...shape.data,
-        stack: undefined,
-      },
+      data: safeData,
     };
   },
 });
