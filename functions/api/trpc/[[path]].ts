@@ -732,11 +732,12 @@ async function geminiGenerateText(
       system: systemPrompt,
       messages: [{ role: "user", content: userPrompt }],
     }),
+    signal: AbortSignal.timeout(45000),
   });
 
   if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`Claude API 錯誤 (${res.status}): ${errText}`);
+    console.error("[Claude] API error:", res.status);
+    throw new Error(`Claude API 暫時無法使用 (${res.status})`);
   }
 
   const data = await res.json() as any;
@@ -1001,7 +1002,7 @@ async function requestOpenAIImage(apiKey: string, prompt: string, refs: RefImage
   if (!response.ok) {
     const errText = await response.text();
     console.error("[OpenAI Image] API error:", response.status, errText.substring(0, 500));
-    throw new Error(`OpenAI 圖片 API 錯誤 (${response.status}): ${errText.slice(0, 500)}`);
+    throw new Error(`OpenAI 圖片 API 暫時無法使用 (${response.status})`);
   }
 
   const data = await response.json() as {
