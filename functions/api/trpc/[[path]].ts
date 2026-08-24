@@ -695,6 +695,15 @@ interface PagesFunction<Env = unknown> {
 // ===== tRPC Setup =====
 const t = initTRPC.context<Context>().create({
   transformer: superjson,
+  errorFormatter({ shape }) {
+    return {
+      ...shape,
+      data: {
+        ...shape.data,
+        stack: undefined,
+      },
+    };
+  },
 });
 
 const router = t.router;
